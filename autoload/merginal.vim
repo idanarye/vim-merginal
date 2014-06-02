@@ -1,3 +1,4 @@
+
 function! merginal#openBranchListBuffer()
     let l:repo=fugitive#repo()
 
@@ -13,6 +14,8 @@ function! merginal#openBranchListBuffer()
         silent file Merginal:Branches
         nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
         nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
+        nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
+        nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
     endif
 
     "At any rate, reassign the active repository
@@ -56,9 +59,30 @@ endfunction
 function! s:checkoutBranchUnderCursor()
     if exists('b:merginal_repoForBranchList') "We only have this if this is a branch list buffer
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
-        execute '!'.b:merginal_repoForBranchList.git_command('checkout').' '.shellescape(l:branchName)
+        echo s:runGitCommandInTreeReturnResult(b:merginal_repoForBranchList,'--no-pager checkout '.shellescape(l:branchName))
         call s:reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
+    endif
+endfunction
+
+function! s:promptToCreateNewBranch()
+    if exists('b:merginal_repoForBranchList') "We only have this if this is a branch list buffer
+        let l:newBranchName=input('Branch `'.fugitive#repo().head().'` to: ')
+        echo s:runGitCommandInTreeReturnResult(b:merginal_repoForBranchList,'--no-pager checkout -b '.shellescape(l:newBranchName))
+        call s:reloadBuffers()
+        call merginal#tryRefreshBranchListBuffer(1)
+    endif
+endfunction
+
+function! s:deleteBranchUnderCursor()
+    if exists('b:merginal_repoForBranchList') "We only have this if this is a branch list buffer
+        let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
+        if 'yes'==input('Delete branch `'.l:branchName.'`?(type "yes" to confirm) ')
+            echo ' '
+            echo s:runGitCommandInTreeReturnResult(b:merginal_repoForBranchList,'--no-pager branch -d '.shellescape(l:branchName))
+            call s:reloadBuffers()
+            call merginal#tryRefreshBranchListBuffer(0)
+        endif
     endif
 endfunction
 
@@ -72,4 +96,22 @@ function! s:reloadBuffers()
         "do nothing
     endtry
     execute l:currentWindow.'wincmd w'
+endfunction
+function! s:runGitCommandInTree(repo,command)
+    let l:dir=getcwd()
+    execute 'cd '.fnameescape(a:repo.tree())
+    try
+        execute '!'.a:repo.git_command().' '.a:command
+    finally
+        execute 'cd '.fnameescape(l:dir)
+    endtry
+endfunction
+function! s:runGitCommandInTreeReturnResult(repo,command)
+    let l:dir=getcwd()
+    execute 'cd '.fnameescape(a:repo.tree())
+    try
+        return system(a:repo.git_command().' '.a:command)
+    finally
+        execute 'cd '.fnameescape(l:dir)
+    endtry
 endfunction

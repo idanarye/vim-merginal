@@ -5,4 +5,4 @@ function! s:impl_GMbranch(arg)
     endif
 endfunction
 
-command! -nargs=? GMbranch call s:impl_GMbranch(<q-args>)
+command! -nargs=? GMbranchList call s:impl_GMbranch(<q-args>)
