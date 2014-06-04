@@ -1,8 +1,9 @@
-
-function! s:impl_GMbranch(arg)
-    if empty(a:arg) "Show branch list
+function! s:openBasedOnMergeMode() abort
+    if merginal#isMergeMode()
+        call merginal#openMergeConflictsBuffer()
+    else
         call merginal#openBranchListBuffer()
     endif
 endfunction
 
-command! -nargs=? GMbranchList call s:impl_GMbranch(<q-args>)
+command! -nargs=0 Merginal call s:openBasedOnMergeMode()
