@@ -5,7 +5,7 @@ Merginal aims provide a nice inteface for dealing with Git branches.  It
 offers interactive TUI for:
 
  * Viewing the list of branches
- * Checkint out branches from that list
+ * Checking out branches from that list
  * Creating new branches
  * Deleting branches
  * Merging branches
