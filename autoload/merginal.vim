@@ -1,3 +1,4 @@
+"Use vimproc if available under windows to prevent opening a console window
 function! s:system(command,...)
     if has('win32') && exists(':VimProcBang') "We don't need vimproc when we use linux
         if empty(a:000)
@@ -14,6 +15,7 @@ function! s:system(command,...)
     endif
 endfunction
 
+"Check if the current window is modifiable, saved, and belongs to the repo
 function! s:isCurrentWindowADisposableWindowOfRepo(repo)
     if !&modifiable
         return 0
@@ -28,6 +30,7 @@ function! s:isCurrentWindowADisposableWindowOfRepo(repo)
     endtry
 endfunction
 
+"Calls s:isCurrentWindowADisposableWindowOfRepo with a window number
 function! s:isWindowADisposableWindowOfRepo(winnr,repo)
     let l:currentWindow=winnr()
     try
@@ -38,6 +41,7 @@ function! s:isWindowADisposableWindowOfRepo(winnr,repo)
     endtry
 endfunction
 
+"Get a list of windows that yield true with s:isWindowADisposableWindowOfRepo
 function! s:getListOfDisposableWindowsOfRepo(repo)
     let l:result=[]
     let l:currentWindow=winnr()
@@ -46,6 +50,7 @@ function! s:getListOfDisposableWindowsOfRepo(repo)
     return l:result
 endfunction
 
+"Get the repository that belongs to a window
 function! s:getRepoOfWindow(winnr)
     "Ignore bad window numbers
     if a:winnr<=0
@@ -62,6 +67,7 @@ function! s:getRepoOfWindow(winnr)
     endtry
 endfunction
 
+"Reload the buffers
 function! s:reloadBuffers()
     let l:currentWindow=winnr()
     try
@@ -74,16 +80,7 @@ function! s:reloadBuffers()
     execute l:currentWindow.'wincmd w'
 endfunction
 
-"function! s:runGitCommandInTree(repo,command)
-    "let l:dir=getcwd()
-    "execute 'cd '.fnameescape(a:repo.tree())
-    "try
-        "execute '!'.a:repo.git_command().' '.a:command
-    "finally
-        "execute 'cd '.fnameescape(l:dir)
-    "endtry
-"endfunction
-
+"Exactly what it says on tin
 function! s:runGitCommandInTreeReturnResult(repo,command)
     let l:dir=getcwd()
     execute 'cd '.fnameescape(a:repo.tree())
@@ -94,6 +91,7 @@ function! s:runGitCommandInTreeReturnResult(repo,command)
     endtry
 endfunction
 
+"Check if a window belongs to Merginal
 function! s:isMerginalWindow(winnr)
     if a:winnr<=0
         return 0
@@ -136,12 +134,15 @@ function! s:openTuiBuffer(bufferName,inWindow)
     return -1==l:tuiBufferWindow
 endfunction
 
+
+
+"Check if the current buffer's repo is in merge mode
 function! merginal#isMergeMode()
     "Use glob() to check for file existence
     return !empty(glob(fugitive#repo().dir('MERGE_MODE')))
 endfunction
 
-
+"Open the branch list buffer for controlling buffers
 function! merginal#openBranchListBuffer(...)
     if s:openTuiBuffer('Merginal:Branches',get(a:000,1,bufwinnr('Merginal:')))
         nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
@@ -155,6 +156,7 @@ function! merginal#openBranchListBuffer(...)
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
 
+"If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branchList=split(s:system(b:merginal_repo.git_command('branch','--all')),'\r\n\|\n\|\r')
@@ -187,6 +189,7 @@ function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
     endif
 endfunction
 
+"Exactly what it says on tin
 function! s:checkoutBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
@@ -196,6 +199,7 @@ function! s:checkoutBranchUnderCursor()
     endif
 endfunction
 
+"Uses the current branch as the source
 function! s:promptToCreateNewBranch()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
@@ -205,6 +209,7 @@ function! s:promptToCreateNewBranch()
     endif
 endfunction
 
+"Verifies the decision
 function! s:deleteBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
@@ -217,6 +222,7 @@ function! s:deleteBranchUnderCursor()
     endif
 endfunction
 
+"If there are merge conflicts, opens the merge conflicts buffer
 function! s:mergeBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
@@ -232,7 +238,7 @@ endfunction
 
 
 
-
+"Open the merge conflicts buffer for resolving merge conflicts
 function! merginal#openMergeConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
     if s:openTuiBuffer('Merginal:Conflicts',get(a:000,1,bufwinnr('Merginal:')))
@@ -290,6 +296,7 @@ function! merginal#tryRefreshMergeConflictsBuffer(fileToJumpTo)
     return 0
 endfunction
 
+"Exactly what it says on tin
 function! s:openMergeConflictUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a merge conflicts buffer
         let l:fileName=getline('.')
@@ -341,6 +348,8 @@ function! s:openMergeConflictUnderCursor()
     endif
 endfunction
 
+"If that was the last merge conflict, automatically opens Fugitive's status
+"buffer
 function! s:addConflictedFileToStagingArea()
     if exists('b:merginal_repo') "We can only do this if this is a merge conflicts buffer
         let l:fileName=getline('.')
