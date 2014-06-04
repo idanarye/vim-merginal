@@ -6,4 +6,4 @@ function! s:openBasedOnMergeMode() abort
     endif
 endfunction
 
-command! -nargs=0 Merginal call s:openBasedOnMergeMode()
+autocmd User Fugitive command! -buffer -nargs=0 Merginal call s:openBasedOnMergeMode()
