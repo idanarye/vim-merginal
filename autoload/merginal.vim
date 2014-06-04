@@ -91,19 +91,6 @@ function! s:runGitCommandInTreeReturnResult(repo,command)
     endtry
 endfunction
 
-"Check if a window belongs to Merginal
-function! s:isMerginalWindow(winnr)
-    if a:winnr<=0
-        return 0
-    endif
-    let l:buffer=winbufnr(a:winnr)
-    if l:buffer<=0
-        return 0
-    endif
-    "check for the merginal repo buffer variable
-    return !empty(getbufvar(l:buffer,'merginal_repo'))
-endfunction
-
 "Returns 1 if a new buffer was opened, 0 if it already existed
 function! s:openTuiBuffer(bufferName,inWindow)
     let l:repo=fugitive#repo()
@@ -114,7 +101,7 @@ function! s:openTuiBuffer(bufferName,inWindow)
         execute l:tuiBufferWindow.'wincmd w'
     else "Open a new buffer
         echo a:inWindow
-        if s:isMerginalWindow(a:inWindow)
+        if merginal#isMerginalWindow(a:inWindow)
             execute a:inWindow.'wincmd w'
             enew
         else
@@ -132,6 +119,20 @@ function! s:openTuiBuffer(bufferName,inWindow)
 
     "Check and return if a new buffer was created
     return -1==l:tuiBufferWindow
+endfunction
+
+
+"Check if a window belongs to Merginal
+function! merginal#isMerginalWindow(winnr)
+    if a:winnr<=0
+        return 0
+    endif
+    let l:buffer=winbufnr(a:winnr)
+    if l:buffer<=0
+        return 0
+    endif
+    "check for the merginal repo buffer variable
+    return !empty(getbufvar(l:buffer,'merginal_repo'))
 endfunction
 
 
