@@ -1,5 +1,5 @@
 "Use vimproc if available under windows to prevent opening a console window
-function! s:system(command,...)
+function! merginal#system(command,...)
     if has('win32') && exists(':VimProcBang') "We don't need vimproc when we use linux
         if empty(a:000)
             return vimproc#system(a:command)
@@ -42,7 +42,7 @@ function! s:isWindowADisposableWindowOfRepo(winnr,repo)
 endfunction
 
 "Get a list of windows that yield true with s:isWindowADisposableWindowOfRepo
-function! s:getListOfDisposableWindowsOfRepo(repo)
+function! merginal#getListOfDisposableWindowsOfRepo(repo)
     let l:result=[]
     let l:currentWindow=winnr()
     windo if s:isCurrentWindowADisposableWindowOfRepo(a:repo) | call add(l:result,winnr()) |  endif
@@ -68,7 +68,7 @@ function! s:getRepoOfWindow(winnr)
 endfunction
 
 "Reload the buffers
-function! s:reloadBuffers()
+function! merginal#reloadBuffers()
     let l:currentWindow=winnr()
     try
         silent windo if ''==&buftype
@@ -81,18 +81,18 @@ function! s:reloadBuffers()
 endfunction
 
 "Exactly what it says on tin
-function! s:runGitCommandInTreeReturnResult(repo,command)
+function! merginal#runGitCommandInTreeReturnResult(repo,command)
     let l:dir=getcwd()
     execute 'cd '.fnameescape(a:repo.tree())
     try
-        return s:system(a:repo.git_command().' '.a:command)
+        return merginal#system(a:repo.git_command().' '.a:command)
     finally
         execute 'cd '.fnameescape(l:dir)
     endtry
 endfunction
 
 "Returns 1 if a new buffer was opened, 0 if it already existed
-function! s:openTuiBuffer(bufferName,inWindow)
+function! merginal#openTuiBuffer(bufferName,inWindow)
     let l:repo=fugitive#repo()
 
     let l:tuiBufferWindow=bufwinnr(bufnr(a:bufferName))
@@ -145,7 +145,7 @@ endfunction
 
 "Open the branch list buffer for controlling buffers
 function! merginal#openBranchListBuffer(...)
-    if s:openTuiBuffer('Merginal:Branches',get(a:000,1,bufwinnr('Merginal:')))
+    if merginal#openTuiBuffer('Merginal:Branches',get(a:000,1,bufwinnr('Merginal:')))
         nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
         nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
         nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
@@ -160,7 +160,7 @@ endfunction
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
-        let l:branchList=split(s:system(b:merginal_repo.git_command('branch','--all')),'\r\n\|\n\|\r')
+        let l:branchList=split(merginal#system(b:merginal_repo.git_command('branch','--all')),'\r\n\|\n\|\r')
         let l:currentLine=line('.')
 
         setlocal modifiable
@@ -194,8 +194,8 @@ endfunction
 function! s:checkoutBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
-        echo s:runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branchName))
-        call s:reloadBuffers()
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branchName))
+        call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
@@ -204,8 +204,8 @@ endfunction
 function! s:promptToCreateNewBranch()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
-        echo s:runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
-        call s:reloadBuffers()
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
+        call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(1)
     endif
 endfunction
@@ -216,8 +216,8 @@ function! s:deleteBranchUnderCursor()
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
         if 'yes'==input('Delete branch `'.l:branchName.'`?(type "yes" to confirm) ')
             echo ' '
-            echo s:runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branchName))
-            call s:reloadBuffers()
+            echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branchName))
+            call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
         endif
     endif
@@ -228,10 +228,9 @@ function! s:mergeBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
         echo ' '
-        "echo s:runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branchName))
-        echo s:runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branchName))
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branchName))
         if v:shell_error
-            call s:reloadBuffers()
+            call merginal#reloadBuffers()
             call merginal#openMergeConflictsBuffer(winnr())
         endif
     endif
@@ -242,7 +241,7 @@ endfunction
 "Open the merge conflicts buffer for resolving merge conflicts
 function! merginal#openMergeConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
-    if s:openTuiBuffer('Merginal:Conflicts',get(a:000,1,bufwinnr('Merginal:')))
+    if merginal#openTuiBuffer('Merginal:Conflicts',get(a:000,1,bufwinnr('Merginal:')))
         nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
         nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
         nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
@@ -256,7 +255,7 @@ endfunction
 function! merginal#tryRefreshMergeConflictsBuffer(fileToJumpTo)
     if exists('b:merginal_repo') "We can only do this if this is a merge conflicts buffer
         "Get the list of unmerged files:
-        let l:branchList=split(s:system(b:merginal_repo.git_command('ls-files','--unmerged')),'\r\n\|\n\|\r')
+        let l:branchList=split(merginal#system(b:merginal_repo.git_command('ls-files','--unmerged')),'\r\n\|\n\|\r')
         "Split by tab - the first part is info, the second is the file name
         let l:branchList=map(l:branchList,'split(v:val,"\t")')
         "Only take the stage 1 files - stage 2 and 3 are the same files with
@@ -330,7 +329,7 @@ function! s:openMergeConflictUnderCursor()
             else
                 "If the previous window can't be used, check if any open
                 "window can be used
-                let l:windowsToOpenTheFileIn=s:getListOfDisposableWindowsOfRepo(b:merginal_repo)
+                let l:windowsToOpenTheFileIn=merginal#getListOfDisposableWindowsOfRepo(b:merginal_repo)
                 if empty(l:windowsToOpenTheFileIn)
                     "If no open window can be used, open a new Vim window
                     new
@@ -357,7 +356,7 @@ function! s:addConflictedFileToStagingArea()
         if empty(l:fileName)
             return
         endif
-        echo s:runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager add '.shellescape(fnamemodify(l:fileName,':p')))
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager add '.shellescape(fnamemodify(l:fileName,':p')))
 
         if merginal#tryRefreshMergeConflictsBuffer(0)
             "If this returns 1, that means this is the last branch, and we
