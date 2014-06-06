@@ -146,16 +146,20 @@ endfunction
 "Open the branch list buffer for controlling buffers
 function! merginal#openBranchListBuffer(...)
     if merginal#openTuiBuffer('Merginal:Branches',get(a:000,1,bufwinnr('Merginal:')))
-        nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
-        nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
-        nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
-        nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
-        nnoremap <buffer> M :call <SID>mergeBranchUnderCursor()<Cr>
+        doautocmd User Merginal_BranchList
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
+
+augroup merginal
+    autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor()<Cr>
+augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
@@ -242,14 +246,18 @@ endfunction
 function! merginal#openMergeConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
     if merginal#openTuiBuffer('Merginal:Conflicts',get(a:000,1,bufwinnr('Merginal:')))
-        nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
-        nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-        nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
+        doautocmd User Merginal_MergeConflicts
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshMergeConflictsBuffer(l:currentFile)
 endfunction
+
+augroup merginal
+    autocmd User Merginal_MergeConflicts nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
+    autocmd User Merginal_MergeConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
+    autocmd User Merginal_MergeConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
+augroup END
 
 "Returns 1 if all merges are done
 function! merginal#tryRefreshMergeConflictsBuffer(fileToJumpTo)
