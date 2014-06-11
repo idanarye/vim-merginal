@@ -110,6 +110,8 @@ function! merginal#openTuiBuffer(bufferName,inWindow)
         setlocal buftype=nofile
         setlocal bufhidden=wipe
         setlocal nomodifiable
+        setlocal winfixwidth
+        setlocal winfixheight
         execute 'silent file '.a:bufferName
         call fugitive#detect(l:repo.dir())
     endif
