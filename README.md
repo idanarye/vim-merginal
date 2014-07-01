@@ -51,6 +51,8 @@ following keymaps to interact with the branches:
            branch. If there are merge conflicts, the merge conflicts
            buffer will open in place of the branch list buffer.
 
+And more - run `:help merginal-branch-list` for more commands.
+
 
 MERGE CONFLICTS
 ===============

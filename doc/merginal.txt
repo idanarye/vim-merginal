@@ -58,6 +58,8 @@ mm     Merge the branch under the cursor into the currently checked out
        branch. If there are merge conflicts, the |merginal-merge-conflicts|
        buffer will open in place of the branch list buffer.
 M      Same as mm.
+mf     Merge the branch under the cursor into the currently checked out branch
+       using Fugitive's |:Gmerge| command.
 
 
 MERGE CONFLICTS                                   *merginal-merge-conflicts*

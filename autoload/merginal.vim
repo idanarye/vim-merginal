@@ -167,6 +167,7 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> dd :call <SID>deleteBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
 augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
@@ -245,6 +246,16 @@ function! s:mergeBranchUnderCursor()
             call merginal#reloadBuffers()
             call merginal#openMergeConflictsBuffer(winnr())
         endif
+    endif
+endfunction
+
+"Use Fugitive's :Gmerge. It was added to Fugitive after I implemented
+"Merginal's merge, and I don't want to remove it since it can still more
+"comfortable for some.
+function! s:mergeBranchUnderCursorUsingFugitive()
+    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+        let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
+        execute ':Gmerge '.l:branchName
     endif
 endfunction
 
