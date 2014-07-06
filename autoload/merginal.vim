@@ -301,6 +301,8 @@ function! s:trackBranchUnderCursor(promptForName)
         if a:promptForName
             let l:newBranchName=input('Track `'.l:branch.handle.'` as: ',l:newBranchName)
             if empty(l:newBranchName)
+                echo ' '
+                echo 'Branch tracking canceled by the user'
                 return
             endif
         endif
@@ -314,6 +316,11 @@ endfunction
 function! s:promptToCreateNewBranch()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
+            if empty(l:newBranchName)
+                echo ' '
+                echo 'Branch creation canceled by the user'
+                return
+            endif
         echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(1)
@@ -324,11 +331,25 @@ endfunction
 function! s:deleteBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branch=merginal#branchDetails('.')
-        if 'yes'==input('Delete branch `'.l:branch.handle.'`?(type "yes" to confirm) ')
-            echo ' '
-            echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
+        let l:answer=0
+        if l:branch.isLocal
+            let l:answer='yes'==input('Delete branch `'.l:branch.handle.'`?(type "yes" to confirm) ')
+        elseif l:branch.isRemote
+            "Deleting remote branches needs a special warning
+            let l:answer='yes-remote'==input('Delete remote(!) branch `'.l:branch.handle.'`?(type "yes-remote" to confirm) ')
+        endif
+        if l:answer
+            if l:branch.isLocal
+                echo ' '
+                echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
+            else
+                execute '!'.b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name)
+            endif
             call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
+        else
+            echo ' '
+            echo 'Branch deletion canceled by the user'
         endif
     endif
 endfunction
@@ -392,9 +413,11 @@ function! s:remoteActionForBranchUnderCursor(remoteAction)
         "Pulling requires the --no-commit flag
         if 'pull'==a:remoteAction
             execute '!'.b:merginal_repo.git_command(a:remoteAction,'--no-commit').' '.shellescape(l:chosenRemote).' '.shellescape(l:branch.handle)
+            call merginal#reloadBuffers()
         else
             execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:branch.handle)
         endif
+        call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
 
