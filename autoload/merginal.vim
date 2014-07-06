@@ -91,6 +91,17 @@ function! merginal#runGitCommandInTreeReturnResult(repo,command)
     endtry
 endfunction
 
+"Like merginal#runGitCommandInTreeReturnResult but split result to lines
+function! merginal#runGitCommandInTreeReturnResultLines(repo,command)
+    let l:dir=getcwd()
+    execute 'cd '.fnameescape(a:repo.tree())
+    try
+        return split(merginal#system(a:repo.git_command().' '.a:command),'\r\n\|\n\|\r')
+    finally
+        execute 'cd '.fnameescape(l:dir)
+    endtry
+endfunction
+
 "Returns 1 if a new buffer was opened, 0 if it already existed
 function! merginal#openTuiBuffer(bufferName,inWindow)
     let l:repo=fugitive#repo()
@@ -231,6 +242,9 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push')<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull')<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch')<Cr>
 augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
@@ -339,6 +353,48 @@ function! s:mergeBranchUnderCursorUsingFugitive()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branch=merginal#branchDetails('.')
         execute ':Gmerge '.l:branchName.handle
+    endif
+endfunction
+
+"Exactly what it says on tin
+function! s:remoteActionForBranchUnderCursor(remoteAction)
+    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+        let l:branch=merginal#branchDetails('.')
+        if !l:branch.isLocal
+            throw 'Can not '.a:remoteAction.' - branch is not local'
+        endif
+        let l:remotes=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'remote')
+        if empty(l:remotes)
+            throw 'Can not '.a:remoteAction.' - no remotes defined'
+        endif
+
+        let l:chosenRemoteIndex=0
+        if 1<len(l:remotes)
+            let l:listForInputlist=map(copy(l:remotes),'v:key+1.") ".v:val')
+            "Choose the correct text accoring to the action:
+            if 'push'==a:remoteAction
+                call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to:')
+            else
+                call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from:')
+            endif
+            let l:chosenRemoteIndex=inputlist(l:listForInputlist)
+
+            "Check that the chosen index is in range
+            if l:chosenRemoteIndex<=0 || len(l:remotes)<l:chosenRemoteIndex
+                return
+            endif
+
+            let l:chosenRemoteIndex=l:chosenRemoteIndex-1
+        endif
+
+        let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
+
+        "Pulling requires the --no-commit flag
+        if 'pull'==a:remoteAction
+            execute '!'.b:merginal_repo.git_command(a:remoteAction,'--no-commit').' '.shellescape(l:chosenRemote).' '.shellescape(l:branch.handle)
+        else
+            execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:branch.handle)
+        endif
     endif
 endfunction
 
