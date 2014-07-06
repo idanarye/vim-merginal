@@ -200,9 +200,6 @@ function! merginal#branchDetails(lineNumber)
 
     return l:result
 endfunction
-augroup merginal
-    autocmd User Merginal_BranchList nnoremap <buffer> tt :echo merginal#branchDetails('.')<Cr>
-augroup END
 
 
 "Check if the current buffer's repo is in merge mode
@@ -225,6 +222,8 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> ct :call <SID>trackBranchUnderCursor(0)<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> cT :call <SID>trackBranchUnderCursor(1)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> aa :call <SID>promptToCreateNewBranch()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
@@ -272,6 +271,26 @@ function! s:checkoutBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
         let l:branch=merginal#branchDetails('.')
         echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
+        call merginal#reloadBuffers()
+        call merginal#tryRefreshBranchListBuffer(0)
+    endif
+endfunction
+
+"Track what it says on tin
+function! s:trackBranchUnderCursor(promptForName)
+    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+        let l:branch=merginal#branchDetails('.')
+        if !l:branch.isRemote
+            throw 'Can not track - branch is not remote'
+        endif
+        let l:newBranchName=l:branch.name
+        if a:promptForName
+            let l:newBranchName=input('Track `'.l:branch.handle.'` as: ',l:newBranchName)
+            if empty(l:newBranchName)
+                return
+            endif
+        endif
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName).' --track '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
     endif

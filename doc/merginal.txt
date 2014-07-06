@@ -48,6 +48,8 @@ following keymaps to interact with the branches:
 
 R      Refresh the buffer list.
 cc     Checkout the branch under the cursor.
+ct     Track the remote branch under the cursor.
+cT     Track the remote branch under the cursor, prompting for a name.
 C      Same as cc.
 aa     Create a new branch from the currently checked out branch. You'll be
        prompted to enter a name for the new branch.
