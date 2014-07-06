@@ -140,6 +140,70 @@ function! merginal#isMerginalWindow(winnr)
 endfunction
 
 
+"For the branch in the specified line, retrieve:
+" - type: 'local', 'remote' or 'detached'
+" - isLocal, isRemote, isDetached
+" - remote: the name of the remote or '' for local branches
+" - name: the name of the branch, without the remote
+" - handle: the named used for referring the branch in git commands
+function! merginal#branchDetails(lineNumber)
+    if !exists('b:merginal_repo')
+        throw 'Unable to get branch details outside the merginal window'
+    end
+    let l:line=getline(a:lineNumber)
+    let l:result={}
+
+
+    "Check if this branch is the currently selected one
+    let l:result.current=('*'==l:line[0])
+    let l:line=l:line[2:]
+
+    let l:detachedMatch=matchlist(l:line,'\v^\(detached from ([^/]+)%(/(.*))?\)$')
+    if !empty(l:detachedMatch)
+        let l:result.type='detached'
+        let l:result.isLocal=0
+        let l:result.isRemote=0
+        let l:result.isDetached=1
+        let l:result.remote=l:detachedMatch[1]
+        let l:result.name=l:detachedMatch[2]
+        if empty(l:detachedMatch[2])
+            let l:result.handle=l:detachedMatch[1]
+        else
+            let l:result.handle=l:detachedMatch[1].'/'.l:detachedMatch[2]
+        endif
+        return l:result
+    endif
+
+    let l:remoteMatch=matchlist(l:line,'\v^remotes/([^/]+)%(/(\S*))%( \-\> (\S+))?$')
+    if !empty(l:remoteMatch)
+        let l:result.type='remote'
+        let l:result.isLocal=0
+        let l:result.isRemote=1
+        let l:result.isDetached=0
+        let l:result.remote=l:remoteMatch[1]
+        let l:result.name=l:remoteMatch[2]
+        if empty(l:remoteMatch[2])
+            let l:result.handle=l:remoteMatch[1]
+        else
+            let l:result.handle=l:remoteMatch[1].'/'.l:remoteMatch[2]
+        endif
+        return l:result
+    endif
+
+    let l:result.type='local'
+    let l:result.isLocal=1
+    let l:result.isRemote=0
+    let l:result.isDetached=0
+    let l:result.remote=''
+    let l:result.name=l:line
+    let l:result.handle=l:line
+
+    return l:result
+endfunction
+augroup merginal
+    autocmd User Merginal_BranchList nnoremap <buffer> tt :echo merginal#branchDetails('.')<Cr>
+augroup END
+
 
 "Check if the current buffer's repo is in merge mode
 function! merginal#isMergeMode()
@@ -206,8 +270,8 @@ endfunction
 "Exactly what it says on tin
 function! s:checkoutBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
-        let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branchName))
+        let l:branch=merginal#branchDetails('.')
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
     endif
@@ -226,10 +290,10 @@ endfunction
 "Verifies the decision
 function! s:deleteBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
-        let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
-        if 'yes'==input('Delete branch `'.l:branchName.'`?(type "yes" to confirm) ')
+        let l:branch=merginal#branchDetails('.')
+        if 'yes'==input('Delete branch `'.l:branch.handle.'`?(type "yes" to confirm) ')
             echo ' '
-            echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branchName))
+            echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
             call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
         endif
@@ -239,9 +303,9 @@ endfunction
 "If there are merge conflicts, opens the merge conflicts buffer
 function! s:mergeBranchUnderCursor()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
-        let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
+        let l:branch=merginal#branchDetails('.')
         echo ' '
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branchName))
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
         if v:shell_error
             call merginal#reloadBuffers()
             call merginal#openMergeConflictsBuffer(winnr())
@@ -254,8 +318,8 @@ endfunction
 "comfortable for some.
 function! s:mergeBranchUnderCursorUsingFugitive()
     if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
-        let l:branchName=substitute(getline('.'),'\v^\*?\s*','','') "Remove leading characters:
-        execute ':Gmerge '.l:branchName
+        let l:branch=merginal#branchDetails('.')
+        execute ':Gmerge '.l:branchName.handle
     endif
 endfunction
 
