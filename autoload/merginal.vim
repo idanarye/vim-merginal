@@ -15,6 +15,53 @@ function! merginal#system(command,...)
     endif
 endfunction
 
+"Opens a file that belongs to a repo in a window that already belongs to that
+"repo. Creates a new window if can't find suitable window.
+function! merginal#openFileDecidedWindow(repo,fileName)
+    "We have to check with bufexists, because bufnr also match prefixes of the
+    "file name
+    let l:fileBuffer=-1
+    if bufexists(a:fileName)
+        let l:fileBuffer=bufnr(a:fileName)
+    endif
+
+    "We have to check with bufloaded, because bufwinnr also matches closed
+    "windows...
+    let l:windowToOpenIn=-1
+    if bufloaded(l:fileBuffer)
+        let l:windowToOpenIn=bufwinnr(l:fileBuffer)
+    endif
+
+    "If we found an open window with the correct file, we jump to it
+    if -1<l:windowToOpenIn
+        execute l:windowToOpenIn.'wincmd w'
+    else
+        "Check if the previous window can be used
+        let l:previousWindow=winnr('#')
+        if s:isWindowADisposableWindowOfRepo(l:previousWindow,a:repo)
+            execute winnr('#').'wincmd w'
+        else
+            "If the previous window can't be used, check if any open
+            "window can be used
+            let l:windowsToOpenTheFileIn=merginal#getListOfDisposableWindowsOfRepo(a:repo)
+            if empty(l:windowsToOpenTheFileIn)
+                "If no open window can be used, open a new Vim window
+                new
+            else
+                execute l:windowsToOpenTheFileIn[0].'wincmd w'
+            endif
+        endif
+        if -1<l:fileBuffer
+            "If the buffer is already open, jump to it
+            execute 'buffer '.l:fileBuffer
+        else
+            "Otherwise, load it
+            execute 'edit '.fnameescape(a:fileName)
+        endif
+    endif
+    diffoff "Just in case...
+endfunction
+
 "Check if the current window is modifiable, saved, and belongs to the repo
 function! s:isCurrentWindowADisposableWindowOfRepo(repo)
     if !&modifiable
@@ -111,7 +158,6 @@ function! merginal#openTuiBuffer(bufferName,inWindow)
     if -1<l:tuiBufferWindow "Jump to the already open buffer
         execute l:tuiBufferWindow.'wincmd w'
     else "Open a new buffer
-        echo a:inWindow
         if merginal#isMerginalWindow(a:inWindow)
             execute a:inWindow.'wincmd w'
             enew
@@ -153,7 +199,7 @@ endfunction
 
 "For the branch in the specified line, retrieve:
 " - type: 'local', 'remote' or 'detached'
-" - isLocal, isRemote, isDetached
+" - isCurrent, isLocal, isRemote, isDetached
 " - remote: the name of the remote or '' for local branches
 " - name: the name of the branch, without the remote
 " - handle: the named used for referring the branch in git commands
@@ -166,7 +212,7 @@ function! merginal#branchDetails(lineNumber)
 
 
     "Check if this branch is the currently selected one
-    let l:result.current=('*'==l:line[0])
+    let l:result.isCurrent=('*'==l:line[0])
     let l:line=l:line[2:]
 
     let l:detachedMatch=matchlist(l:line,'\v^\(detached from ([^/]+)%(/(.*))?\)$')
@@ -245,6 +291,7 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push')<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull')<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch')<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
 augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
@@ -422,6 +469,27 @@ function! s:remoteActionForBranchUnderCursor(remoteAction)
 endfunction
 
 
+"Opens the diff files buffer
+function! s:diffWithBranchUnderCursor()
+    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+        let l:branch=merginal#branchDetails('.')
+        if l:branch.isCurrent
+            throw 'Can not diff against the current branch'
+        endif
+        call merginal#openDiffFilesBuffer(l:branch)
+        "if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
+            "doautocmd User Merginal_DiffFiles
+        "endif
+        "echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'diff --name-status '.shellescape(l:branch.handle))
+        "if v:shell_error
+            "call merginal#reloadBuffers()
+            "call merginal#openMergeConflictsBuffer(winnr())
+        "endif
+        "call merginal#tryRefreshDiffFilesBuffer()
+    endif
+endfunction
+
+
 
 "Open the merge conflicts buffer for resolving merge conflicts
 function! merginal#openMergeConflictsBuffer(...)
@@ -493,48 +561,7 @@ function! s:openMergeConflictUnderCursor()
         if empty(l:fileName)
             return
         endif
-
-        "We have to check with bufexists, because bufnr also match prefixes of
-        "the file name
-        let l:fileBuffer=-1
-        if bufexists(l:fileName)
-            let l:fileBuffer=bufnr(l:fileName)
-        endif
-
-        "We have to check with bufloaded, because bufwinnr also matches closed
-        "windows...
-        let l:windowToOpenIn=-1
-        if bufloaded(l:fileBuffer)
-            let l:windowToOpenIn=bufwinnr(l:fileBuffer)
-        endif
-
-        "If we found an open window with the correct file, we jump to it
-        if -1<l:windowToOpenIn
-            execute l:windowToOpenIn.'wincmd w'
-        else
-            "Check if the previous window can be used
-            let l:previousWindow=winnr('#')
-            if s:isWindowADisposableWindowOfRepo(l:previousWindow,b:merginal_repo)
-                execute winnr('#').'wincmd w'
-            else
-                "If the previous window can't be used, check if any open
-                "window can be used
-                let l:windowsToOpenTheFileIn=merginal#getListOfDisposableWindowsOfRepo(b:merginal_repo)
-                if empty(l:windowsToOpenTheFileIn)
-                    "If no open window can be used, open a new Vim window
-                    new
-                else
-                    execute l:windowsToOpenTheFileIn[0].'wincmd w'
-                endif
-            endif
-            if -1<l:fileBuffer
-                "If the buffer is already open, jump to it
-                execute 'buffer '.l:fileBuffer
-            else
-                "Otherwise, load it
-                execute 'edit '.fnameescape(l:fileName)
-            endif
-        endif
+        call merginal#openFileDecidedWindow(b:merginal_repo,l:fileName)
     endif
 endfunction
 
@@ -557,6 +584,156 @@ function! s:addConflictedFileToStagingArea()
             execute bufwinnr(l:mergeConflictsBuffer).'wincmd w'
             wincmd q
             execute bufwinnr(l:gitStatusBuffer).'wincmd w'
+        endif
+    endif
+endfunction
+
+
+"Open the diff files buffer for diffing agains another branch
+function! merginal#openDiffFilesBuffer(diffBranch,...)
+    if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
+        doautocmd User Merginal_DiffFiles
+    endif
+
+    let b:merginal_diffBranch=a:diffBranch
+
+    "At any rate, refresh the buffer:
+    call merginal#tryRefreshDiffFilesBuffer()
+endfunction
+
+augroup merginal
+    autocmd User Merginal_DiffFiles nnoremap <buffer> R :call merginal#tryRefreshDiffFilesBuffer()<Cr>
+    autocmd User Merginal_DiffFiles nnoremap <buffer> <Cr> :call <SID>openDiffFileUnderCursor()<Cr>
+    autocmd User Merginal_DiffFiles nnoremap <buffer> ds :call <SID>openDiffFileUnderCursorAndDiff('s')<Cr>
+    autocmd User Merginal_DiffFiles nnoremap <buffer> dv :call <SID>openDiffFileUnderCursorAndDiff('v')<Cr>
+    autocmd User Merginal_DiffFiles nnoremap <buffer> co :call <SID>checkoutDiffFileUnderCursor()<Cr>
+augroup END
+
+
+"For the diff file in the specified line, retrieve:
+" - type: 'added', 'deleted' or 'modified'
+" - isAdded, isDeleted, isModified
+" - fileInTree: the path of the file relative to the repo
+" - fileFullPath: the full path to the file
+function! merginal#diffFileDetails(lineNumber)
+    if !exists('b:merginal_repo')
+        throw 'Unable to get diff file details outside the merginal window'
+    endif
+    let l:line=getline(a:lineNumber)
+    let l:result={}
+
+    let l:matches=matchlist(l:line,'\v([ADM])\t(.*)$')
+
+    if empty(l:matches)
+        throw 'Unable to get diff files details for `'.l:line.'`'
+    endif
+
+    let l:result.isAdded=0
+    let l:result.isDeleted=0
+    let l:result.isModified=0
+    if 'A'==l:matches[1]
+        let l:result.type='added'
+        let l:result.isAdded=1
+    elseif 'D'==l:matches[1]
+        let l:result.type='deleted'
+        let l:result.isDeleted=1
+    else
+        let l:result.type='modified'
+        let l:result.isModified=1
+    endif
+
+    let l:result.fileInTree=l:matches[2]
+    let l:result.fileFullPath=b:merginal_repo.tree(l:matches[2])
+
+    return l:result
+endfunction
+
+"If the current buffer is a branch list buffer - refresh it!
+function! merginal#tryRefreshDiffFilesBuffer()
+    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+        let l:diffBranch=b:merginal_diffBranch
+        let l:diffFiles=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'diff --name-status '.shellescape(l:diffBranch.handle))
+        let l:currentLine=line('.')
+
+        setlocal modifiable
+        "Clear the buffer:
+        normal ggdG
+        "Write the diff files list:
+        call setline(1,l:diffFiles)
+        setlocal nomodifiable
+
+        execute l:currentLine
+    endif
+endfunction
+
+"Exactly what it says on tin
+function! s:openDiffFileUnderCursor()
+    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+        let l:diffFile=merginal#diffFileDetails('.')
+
+        if l:diffFile.isDeleted
+            throw 'File does not exist in current buffer'
+        endif
+
+        call merginal#openFileDecidedWindow(b:merginal_repo,l:diffFile.fileFullPath)
+    endif
+endfunction
+
+"Exactly what it says on tin
+function! s:openDiffFileUnderCursorAndDiff(diffType)
+    if a:diffType!='s' && a:diffType!='v'
+        throw 'Bad diff type'
+    endif
+    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+        let l:diffFile=merginal#diffFileDetails('.')
+
+        if l:diffFile.isAdded
+            throw 'File does not exist in other buffer'
+        endif
+
+        let l:repo=b:merginal_repo
+        let l:diffBranch=b:merginal_diffBranch
+
+        "Close currently open git diffs
+        let l:currentWindowBuffer=winbufnr('.')
+        try
+            "windo if exists('w:fugitive_diff_restore') && 'blob'==get(b:,'fugitive_type','')
+            windo if 'blob'==get(b:,'fugitive_type','') && exists('w:fugitive_diff_restore')
+                        \| bdelete
+                        \| endif
+        catch
+            "do nothing
+        finally
+            execute bufwinnr(l:currentWindowBuffer).'wincmd w'
+        endtry
+
+        call merginal#openFileDecidedWindow(l:repo,l:diffFile.fileFullPath)
+
+        execute ':G'.a:diffType.'diff '.fnameescape(l:diffBranch.handle)
+    endif
+endfunction
+
+"Checks out the file from the other branch to the current branch
+function! s:checkoutDiffFileUnderCursor()
+    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+        let l:diffFile=merginal#diffFileDetails('.')
+
+        if l:diffFile.isAdded
+            throw 'File does not exist in diffed buffer'
+        endif
+
+        let l:answer=1
+        if !empty(glob(l:diffFile.fileFullPath))
+            let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`?(type "yes" to confirm) ')
+        endif
+        if l:answer
+            echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffBranch.handle)
+                        \.' -- '.shellescape(l:diffFile.fileFullPath))
+            call merginal#reloadBuffers()
+            call merginal#tryRefreshDiffFilesBuffer()
+        else
+            echo ' '
+            echo 'File checkout canceled by the user'
         endif
     endif
 endfunction

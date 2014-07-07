@@ -50,6 +50,7 @@ following keymaps to interact with the branches:
 * `M`      Merge the branch under the cursor into the currently checked out
            branch. If there are merge conflicts, the merge conflicts
            buffer will open in place of the branch list buffer.
+* `gd`     Diff against the branch under the cursor.
 
 And more - run `:help merginal-branch-list` for more commands.
 
@@ -65,3 +66,19 @@ files that have merge conflicts and offers the following keymaps:
 * `A`      Add the conflicted file under the cursor to the staging area. If that
            was the last conflicted file, the merge conflicts buffer will close and
            Fugitive's status window will open.
+
+DIFF FILES
+==========
+The diff files buffer is used to diff against another branch. It displays all
+the differences between the currently checked out branch and the branch it was
+opened against, and offerts the following keymaps:
+
+* `R`      Refresh the diff files list.
+* `<Cr>`   Open the file under the cursor(if it exists in the currently checked
+           out branch).
+* `ds`     Split-diff against the file under the cursor(if it exists in the other
+           branch)
+* `ds`     VSplit-diff against the file under the cursor(if it exists in the other
+           branch)
+* `co`     Check out the file under the cursor(if it exists in the other branch)
+           into the current branch.
