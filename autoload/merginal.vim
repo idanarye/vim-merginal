@@ -296,7 +296,7 @@ augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branchList=split(merginal#system(b:merginal_repo.git_command('branch','--all')),'\r\n\|\n\|\r')
         let l:currentLine=line('.')
 
@@ -329,7 +329,7 @@ endfunction
 
 "Exactly what it says on tin
 function! s:checkoutBranchUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
@@ -339,7 +339,7 @@ endfunction
 
 "Track what it says on tin
 function! s:trackBranchUnderCursor(promptForName)
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         if !l:branch.isRemote
             throw 'Can not track - branch is not remote'
@@ -361,7 +361,7 @@ endfunction
 
 "Uses the current branch as the source
 function! s:promptToCreateNewBranch()
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
             if empty(l:newBranchName)
                 echo ' '
@@ -376,7 +376,7 @@ endfunction
 
 "Verifies the decision
 function! s:deleteBranchUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         let l:answer=0
         if l:branch.isLocal
@@ -403,7 +403,7 @@ endfunction
 
 "If there are merge conflicts, opens the merge conflicts buffer
 function! s:mergeBranchUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         echo ' '
         echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
@@ -418,7 +418,7 @@ endfunction
 "Merginal's merge, and I don't want to remove it since it can still more
 "comfortable for some.
 function! s:mergeBranchUnderCursorUsingFugitive()
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         execute ':Gmerge '.l:branchName.handle
     endif
@@ -426,7 +426,7 @@ endfunction
 
 "Exactly what it says on tin
 function! s:remoteActionForBranchUnderCursor(remoteAction)
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         if !l:branch.isLocal
             throw 'Can not '.a:remoteAction.' - branch is not local'
@@ -471,21 +471,12 @@ endfunction
 
 "Opens the diff files buffer
 function! s:diffWithBranchUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a branch list buffer
+    if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         if l:branch.isCurrent
             throw 'Can not diff against the current branch'
         endif
         call merginal#openDiffFilesBuffer(l:branch)
-        "if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
-            "doautocmd User Merginal_DiffFiles
-        "endif
-        "echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'diff --name-status '.shellescape(l:branch.handle))
-        "if v:shell_error
-            "call merginal#reloadBuffers()
-            "call merginal#openMergeConflictsBuffer(winnr())
-        "endif
-        "call merginal#tryRefreshDiffFilesBuffer()
     endif
 endfunction
 
@@ -511,21 +502,21 @@ augroup END
 
 "Returns 1 if all merges are done
 function! merginal#tryRefreshMergeConflictsBuffer(fileToJumpTo)
-    if exists('b:merginal_repo') "We can only do this if this is a merge conflicts buffer
+    if 'Merginal:Conflicts'==bufname('')
         "Get the list of unmerged files:
-        let l:branchList=split(merginal#system(b:merginal_repo.git_command('ls-files','--unmerged')),'\r\n\|\n\|\r')
+        let l:mergeConflicts=split(merginal#system(b:merginal_repo.git_command('ls-files','--unmerged')),'\r\n\|\n\|\r')
         "Split by tab - the first part is info, the second is the file name
-        let l:branchList=map(l:branchList,'split(v:val,"\t")')
+        let l:mergeConflicts=map(l:mergeConflicts,'split(v:val,"\t")')
         "Only take the stage 1 files - stage 2 and 3 are the same files with
         "different hash, and we don't care about the hash here
-        let l:branchList=filter(l:branchList,'v:val[0] =~ "\\v 1$"')
+        let l:mergeConflicts=filter(l:mergeConflicts,'v:val[0] =~ "\\v 1$"')
         "Take the file name - we no longer care about the info
-        let l:branchList=map(l:branchList,'v:val[1]')
+        let l:mergeConflicts=map(l:mergeConflicts,'v:val[1]')
         "If the working copy is not the current dir, we can get wrong paths.
         "We need to resulve that:
-        let l:branchList=map(l:branchList,'b:merginal_repo.tree(v:val)')
+        let l:mergeConflicts=map(l:mergeConflicts,'b:merginal_repo.tree(v:val)')
         "Make the paths as short as possible:
-        let l:branchList=map(l:branchList,'fnamemodify(v:val,":~:.")')
+        let l:mergeConflicts=map(l:mergeConflicts,'fnamemodify(v:val,":~:.")')
 
 
         let l:currentLine=line('.')
@@ -534,9 +525,9 @@ function! merginal#tryRefreshMergeConflictsBuffer(fileToJumpTo)
         "Clear the buffer:
         normal ggdG
         "Write the branch list:
-        call setline(1,l:branchList)
+        call setline(1,l:mergeConflicts)
         setlocal nomodifiable
-        if empty(l:branchList)
+        if empty(l:mergeConflicts)
             return 1
         endif
 
@@ -556,7 +547,7 @@ endfunction
 
 "Exactly what it says on tin
 function! s:openMergeConflictUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a merge conflicts buffer
+    if 'Merginal:Conflicts'==bufname('')
         let l:fileName=getline('.')
         if empty(l:fileName)
             return
@@ -568,7 +559,7 @@ endfunction
 "If that was the last merge conflict, automatically opens Fugitive's status
 "buffer
 function! s:addConflictedFileToStagingArea()
-    if exists('b:merginal_repo') "We can only do this if this is a merge conflicts buffer
+    if 'Merginal:Conflicts'==bufname('')
         let l:fileName=getline('.')
         if empty(l:fileName)
             return
@@ -650,7 +641,7 @@ endfunction
 
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshDiffFilesBuffer()
-    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+    if 'Merginal:Diff'==bufname('')
         let l:diffBranch=b:merginal_diffBranch
         let l:diffFiles=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'diff --name-status '.shellescape(l:diffBranch.handle))
         let l:currentLine=line('.')
@@ -668,7 +659,7 @@ endfunction
 
 "Exactly what it says on tin
 function! s:openDiffFileUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+    if 'Merginal:Diff'==bufname('')
         let l:diffFile=merginal#diffFileDetails('.')
 
         if l:diffFile.isDeleted
@@ -684,7 +675,7 @@ function! s:openDiffFileUnderCursorAndDiff(diffType)
     if a:diffType!='s' && a:diffType!='v'
         throw 'Bad diff type'
     endif
-    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+    if 'Merginal:Diff'==bufname('')
         let l:diffFile=merginal#diffFileDetails('.')
 
         if l:diffFile.isAdded
@@ -697,7 +688,6 @@ function! s:openDiffFileUnderCursorAndDiff(diffType)
         "Close currently open git diffs
         let l:currentWindowBuffer=winbufnr('.')
         try
-            "windo if exists('w:fugitive_diff_restore') && 'blob'==get(b:,'fugitive_type','')
             windo if 'blob'==get(b:,'fugitive_type','') && exists('w:fugitive_diff_restore')
                         \| bdelete
                         \| endif
@@ -715,7 +705,7 @@ endfunction
 
 "Checks out the file from the other branch to the current branch
 function! s:checkoutDiffFileUnderCursor()
-    if exists('b:merginal_repo') "We can only do this if this is a diff files buffer
+    if 'Merginal:Diff'==bufname('')
         let l:diffFile=merginal#diffFileDetails('.')
 
         if l:diffFile.isAdded
