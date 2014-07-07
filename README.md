@@ -10,6 +10,8 @@ offers interactive TUI for:
  * Deleting branches
  * Merging branches
  * Solving merge conflicts
+ * Interacting with remotes(pulling, pushing, fetching, tracking)
+ * Diffing against other branches
 
 
 REQUIREMENTS
@@ -43,16 +45,21 @@ The branch list shows a list of branches. While in that list, you can use the
 following keymaps to interact with the branches:
 
 * `R`      Refresh the buffer list.
-* `C`      Checkout the branch under the cursor.
-* `A`      Create a new branch from the currently checked out branch. You'll be
+* `C`/`cc` Checkout the branch under the cursor.
+* `A`/`aa` Create a new branch from the currently checked out branch. You'll be
            prompted to enter a name for the new branch.
-* `D`      Delete the branch under the cursor.
-* `M`      Merge the branch under the cursor into the currently checked out
+* `D`/`dd` Delete the branch under the cursor.
+* `M`/`mm` Merge the branch under the cursor into the currently checked out
            branch. If there are merge conflicts, the merge conflicts
            buffer will open in place of the branch list buffer.
+* `mf`     Merge the branch under the cursor into the currently checked out branch
+           using Fugitive's `:Gmerge` command.
+* `ps`     Prompt to choose a remote to push the branch under the cursor.
+* `pl`     Prompt to choose a remote to pull the branch under the cursor.
+* `pf`     Prompt to choose a remote to fetch the branch under the cursor.
 * `gd`     Diff against the branch under the cursor.
 
-And more - run `:help merginal-branch-list` for more commands.
+Run `:help merginal-branch-list` for more info.
 
 
 MERGE CONFLICTS
@@ -63,7 +70,7 @@ files that have merge conflicts and offers the following keymaps:
 
 * `R`      Refresh the merge conflicts list.
 * `<Cr>`   Open the conflicted file under the cursor.
-* `A`      Add the conflicted file under the cursor to the staging area. If that
+* `A`/`aa` Add the conflicted file under the cursor to the staging area. If that
            was the last conflicted file, the merge conflicts buffer will close and
            Fugitive's status window will open.
 
