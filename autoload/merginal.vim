@@ -258,6 +258,29 @@ function! merginal#branchDetails(lineNumber)
     return l:result
 endfunction
 
+function! merginal#getLocalBranchNamesThatTrackARemoteBranch(remoteBranchName)
+    "Get verbose list of branches
+    let l:branchList=split(merginal#system(b:merginal_repo.git_command('branch','-vv')),'\r\n\|\n\|\r')
+
+    "Filter for branches that track our remote
+    let l:checkIfTrackingRegex='\V['.escape(a:remoteBranchName,'\').'\[\]:]'
+    let l:branchList=filter(l:branchList,'v:val=~l:checkIfTrackingRegex')
+
+    "Extract the branch name from the matching lines
+    "let l:extractBranchNameRegex='\v^\*?\s*(\S+)'
+    "let l:branchList=map(l:branchList,'matchlist(v:val,l:extractBranchNameRegex)[1]')
+    let l:extractBranchNameRegex='\v^\*?\s*\zs\S+'
+    let l:branchList=map(l:branchList,'matchstr(v:val,l:extractBranchNameRegex)')
+
+    return l:branchList
+endfunction
+
+function! merginal#getRemoteBranchTrackedByLocalBranch(localBranchName)
+    let l:result=merginal#system(b:merginal_repo.git_command('branch','--list',a:localBranchName,'-vv'))
+    echo l:result
+    return matchstr(l:result,'\v\[\zs[^\[\]:]*\ze[\]:]')
+endfunction
+
 
 "Check if the current buffer's repo is in merge mode
 function! merginal#isMergeMode()
@@ -428,41 +451,100 @@ endfunction
 function! s:remoteActionForBranchUnderCursor(remoteAction)
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        if !l:branch.isLocal
-            throw 'Can not '.a:remoteAction.' - branch is not local'
-        endif
-        let l:remotes=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'remote')
-        if empty(l:remotes)
-            throw 'Can not '.a:remoteAction.' - no remotes defined'
-        endif
+        if l:branch.isLocal
+            let l:remotes=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'remote')
+            if empty(l:remotes)
+                throw 'Can not '.a:remoteAction.' - no remotes defined'
+            endif
 
-        let l:chosenRemoteIndex=0
-        if 1<len(l:remotes)
-            let l:listForInputlist=map(copy(l:remotes),'v:key+1.") ".v:val')
-            "Choose the correct text accoring to the action:
+            let l:chosenRemoteIndex=0
+            if 1<len(l:remotes)
+                let l:listForInputlist=map(copy(l:remotes),'v:key+1.") ".v:val')
+                "Choose the correct text accoring to the action:
+                if 'push'==a:remoteAction
+                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to:')
+                else
+                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from:')
+                endif
+                let l:chosenRemoteIndex=inputlist(l:listForInputlist)
+
+                "Check that the chosen index is in range
+                if l:chosenRemoteIndex<=0 || len(l:remotes)<l:chosenRemoteIndex
+                    return
+                endif
+
+                let l:chosenRemoteIndex=l:chosenRemoteIndex-1
+            endif
+
+            let l:localBranchName=l:branch.name
+            let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
+
+            let l:remoteBranchNameCanadidate=merginal#getRemoteBranchTrackedByLocalBranch(l:branch.name)
+            echo ' '
+            if !empty(l:remoteBranchNameCanadidate)
+                "Check that this is the same remote:
+                if l:remoteBranchNameCanadidate=~'\V\^'.escape(l:chosenRemote,'\').'/'
+                    "Remote the remote repository name
+                    let l:remoteBranchName=l:remoteBranchNameCanadidate[len(l:chosenRemote)+1:(-1)]
+                endif
+            endif
+        elseif l:branch.isRemote
+            let l:chosenRemote=l:branch.remote
             if 'push'==a:remoteAction
-                call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to:')
+                "For push, we want to specify the remote branch name
+                let l:remoteBranchName=l:branch.name
+
+                let l:locals=merginal#getLocalBranchNamesThatTrackARemoteBranch(l:branch.handle)
+                if empty(l:locals)
+                    let l:localBranchName=l:branch.name
+                elseif 1==len(l:locals)
+                    let l:localBranchName=l:locals[0]
+                else
+                    let l:listForInputlist=map(copy(l:locals),'v:key+1.") ".v:val')
+                    call insert(l:listForInputlist,'Choose local branch to push `'.l:branch.handle.'` from:')
+                    let l:chosenLocalIndex=inputlist(l:listForInputlist)
+
+                    "Check that the chosen index is in range
+                    if l:chosenLocalIndex<=0 || len(l:locals)<l:chosenLocalIndex
+                        return
+                    endif
+
+                    let l:localBranchName=l:locals[l:chosenLocalIndex-1]
+                endif
             else
-                call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from:')
+                "For pull and fetch, git automatically resolves the tracking
+                "branch based on the remote branch.
+                let l:localBranchName=l:branch.name
             endif
-            let l:chosenRemoteIndex=inputlist(l:listForInputlist)
-
-            "Check that the chosen index is in range
-            if l:chosenRemoteIndex<=0 || len(l:remotes)<l:chosenRemoteIndex
-                return
-            endif
-
-            let l:chosenRemoteIndex=l:chosenRemoteIndex-1
         endif
 
-        let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
+        if exists('l:remoteBranchName') && empty(l:remoteBranchName)
+            unlet l:remoteBranchName
+        endif
 
         "Pulling requires the --no-commit flag
         if 'pull'==a:remoteAction
-            execute '!'.b:merginal_repo.git_command(a:remoteAction,'--no-commit').' '.shellescape(l:chosenRemote).' '.shellescape(l:branch.handle)
+            if exists('l:remoteBranchName')
+                let l:remoteBranchNameAsPrefix=shellescape(l:remoteBranchName).':'
+            else
+                let l:remoteBranchNameAsPrefix=''
+            endif
+            execute '!'.b:merginal_repo.git_command(a:remoteAction,'--no-commit').' '.shellescape(l:chosenRemote).' '.l:remoteBranchNameAsPrefix.shellescape(l:localBranchName)
             call merginal#reloadBuffers()
-        else
-            execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:branch.handle)
+        elseif 'push'==a:remoteAction
+            if exists('l:remoteBranchName')
+                let l:remoteBranchNameAsSuffix=':'.shellescape(l:remoteBranchName)
+            else
+                let l:remoteBranchNameAsSuffix=''
+            endif
+            execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:localBranchName).l:remoteBranchNameAsSuffix
+        elseif 'fetch'==a:remoteAction
+            if exists('l:remoteBranchName')
+                let l:targetBranchName=l:remoteBranchName
+            else
+                let l:targetBranchName=l:localBranchName
+            endif
+            execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:targetBranchName)
         endif
         call merginal#tryRefreshBranchListBuffer(0)
     endif
