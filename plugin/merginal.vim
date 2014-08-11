@@ -1,5 +1,7 @@
 function! s:openBasedOnMergeMode() abort
-    if merginal#isMergeMode()
+    if merginal#isRebaseMode()
+        call merginal#openRebaseConflictsBuffer()
+    elseif merginal#isMergeMode()
         call merginal#openMergeConflictsBuffer()
     else
         call merginal#openBranchListBuffer()
