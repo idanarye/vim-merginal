@@ -41,6 +41,9 @@ it'll open the |merginal-merge-conflicts| buffer.
 Like Fugitive's commands, |:Merginal| is native to the buffer, and will only
 work in buffers that are parts of Git repositories.
 
+You can also toggle the buffer with |:MerginalToggle| or close it with
+|:MerginalClose|.
+
 
 THE BRANCH LIST                                       *merginal-branch-list*
 

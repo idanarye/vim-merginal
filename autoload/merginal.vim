@@ -149,6 +149,27 @@ function! merginal#runGitCommandInTreeReturnResultLines(repo,command)
     endtry
 endfunction
 
+"Returns 1 if there was a merginal bufffer to close
+function! merginal#closeMerginalBuffer()
+    let l:merginalWindowNumber=bufwinnr('Merginal:')
+    if 0<=l:merginalWindowNumber
+        let l:currentWindow=winnr()
+        try
+            execute l:merginalWindowNumber.'wincmd w'
+            wincmd q
+            "If the current window is after the merginal window, closing the
+            "merginal window will decrease the current window's nubmer.
+            if l:merginalWindowNumber<l:currentWindow
+                let l:currentWindow=l:currentWindow-1
+            endif
+            return 1
+        finally
+            execute l:currentWindow.'wincmd w'
+        endtry
+    end
+    return 0
+endfunction
+
 "Returns 1 if a new buffer was opened, 0 if it already existed
 function! merginal#openTuiBuffer(bufferName,inWindow)
     let l:repo=fugitive#repo()
