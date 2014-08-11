@@ -487,7 +487,7 @@ function! s:rebaseBranchUnderCursor()
     endif
 endfunction
 
-"Exactly what it says on tin
+"Run various remote actions
 function! s:remoteActionForBranchUnderCursor(remoteAction)
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
@@ -712,7 +712,14 @@ function! s:addConflictedFileToStagingArea()
                 execute bufwinnr(l:gitStatusBuffer).'wincmd w'
             endif
         else
-            call merginal#tryRefreshRebaseConflictsBuffer(0)
+            if merginal#tryRefreshRebaseConflictsBuffer(0)
+                echo 'Added the last file of this patch.'
+                echo 'Continue to the next patch(y/n)?'
+                let l:answer=getchar()
+                if char2nr('y')==l:answer || char2nr('Y')==l:answer
+                    call s:rebaseAction('continue')
+                endif
+            endif
         endif
     endif
 endfunction
@@ -883,6 +890,9 @@ augroup merginal
     autocmd User Merginal_RebaseConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
     autocmd User Merginal_RebaseConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
     autocmd User Merginal_RebaseConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
+    autocmd User Merginal_RebaseConflicts nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
+    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
+    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
 augroup END
 
 "Returns 1 if all rebase conflicts are done
@@ -895,4 +905,18 @@ function! merginal#tryRefreshRebaseConflictsBuffer(fileToJumpTo)
         return s:refreshConflictsBuffer(a:fileToJumpTo,l:currentCommitMessageLines)
     endif
     return 0
+endfunction
+
+"Run various rebase actions
+function! s:rebaseAction(remoteAction)
+    if 'Merginal:Rebase'==bufname('')
+        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager rebase --'.a:remoteAction)
+        call merginal#reloadBuffers()
+        if merginal#isRebaseMode()
+            call merginal#tryRefreshRebaseConflictsBuffer(0)
+        else
+            "If we finished rebasing - close the rebase conflicts buffer
+            wincmd q
+        endif
+    endif
 endfunction

@@ -16,6 +16,7 @@ offers interactive TUI for:
 * Creating new branches
 * Deleting branches
 * Merging branches
+* Rebasing branches
 * Solving merge conflicts
 
 
@@ -94,8 +95,13 @@ and offers the following keymaps:
 
 R      Refresh the rebase conflicts list.
 <Cr>   Open the conflicted file under the cursor.
-aa     Add the conflicted file under the cursor to the staging area.
+aa     Add the conflicted file under the cursor to the staging area. If that
+       was the last conflicted file, prompt the user to continue to the next
+       patch.
 A      Same as aa.
+ra     Abort the rebase
+rc     Continue to the next patch.
+rs     Skip the current patch
 
 
 DIFF FILES                                             *merginal-diff-files*
