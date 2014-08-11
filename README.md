@@ -9,6 +9,7 @@ offers interactive TUI for:
  * Creating new branches
  * Deleting branches
  * Merging branches
+ * Rebasing branches
  * Solving merge conflicts
  * Interacting with remotes(pulling, pushing, fetching, tracking)
  * Diffing against other branches
@@ -37,6 +38,9 @@ it'll open the merge conflicts buffer.
 Like Fugitive's commands, `:Merginal` is native to the buffer, and will only
 work in buffers that are parts of Git repositories.
 
+You can also toggle the buffer with `:MerginalToggle` or close it with
+`:MerginalClose`.
+
 
 THE BRANCH LIST
 ===============
@@ -54,6 +58,9 @@ following keymaps to interact with the branches:
            buffer will open in place of the branch list buffer.
 * `mf`     Merge the branch under the cursor into the currently checked out branch
            using Fugitive's `:Gmerge` command.
+* `rb`     Rebase the currently checked out branch against the branch under the
+           cursor. If there are rebase conflicts, the rebase conflicts buffer will open in place of
+           the branch list buffer.
 * `ps`     Prompt to choose a remote to push the branch under the cursor.
 * `pl`     Prompt to choose a remote to pull the branch under the cursor.
 * `pf`     Prompt to choose a remote to fetch the branch under the cursor.
@@ -73,6 +80,24 @@ files that have merge conflicts and offers the following keymaps:
 * `A`/`aa` Add the conflicted file under the cursor to the staging area. If that
            was the last conflicted file, the merge conflicts buffer will close and
            Fugitive's status window will open.
+
+
+REBASE CONFLICTS
+================
+
+The rebase conflicts buffer is used to solve rebase conflicts. It shows the
+currently applied commit message and all the files that have rebase conflicts,
+and offers the following keymaps:
+
+* `R`      Refresh the rebase conflicts list.
+* `<Cr>`   Open the conflicted file under the cursor.
+* `aa`     Add the conflicted file under the cursor to the staging area. If
+           that was the last conflicted file, prompt the user to continue to
+           the next patch.
+* `A`      Same as aa.
+* `ra`     Abort the rebase
+* `rc`     Continue to the next patch.
+* `rs`     Skip the current patch
 
 DIFF FILES
 ==========

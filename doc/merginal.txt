@@ -4,7 +4,7 @@
 Author:  Idan Arye <https://github.com/idanarye/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 1.2.0+
+Version: 1.3.0
 
 INTRODUCTION                                                      *merginal*
 
@@ -69,7 +69,7 @@ mf     Merge the branch under the cursor into the currently checked out branch
 rb     Rebase the currently checked out branch against the branch under the
        cursor. If there are rebase conflicts, the |merginal-rebase-conflicts|
        buffer will open in place of
-the branch list buffer.
+       the branch list buffer.
 ps     Prompt to choose a remote to push the branch under the cursor.
 pl     Prompt to choose a remote to pull the branch under the cursor.
 pf     Prompt to choose a remote to fetch the branch under the cursor.
