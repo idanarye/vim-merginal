@@ -481,6 +481,12 @@ function! s:mergeBranchUnderCursor()
         call merginal#reloadBuffers()
         if v:shell_error
             call merginal#openMergeConflictsBuffer(winnr())
+        elseif merginal#isMergeMode()
+            "If we are in merge mode without a shell error, that means there
+            "are not conflicts and the user can be prompted to enter a merge
+            "message.
+            Gstatus
+            call merginal#closeMerginalBuffer()
         endif
     endif
 endfunction
