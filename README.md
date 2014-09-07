@@ -100,6 +100,22 @@ and offers the following keymaps:
 * `rc`     Continue to the next patch.
 * `rs`     Skip the current patch
 
+
+REBASE AMEND
+================
+
+The rebase amend buffer is shown when you amend a patch during a rebase. It
+shows the amended commit's shortened hash and commit message. Additionally, it
+shows all the branches so you can diff against them while the patch. If offers
+the folloing keymaps:
+
+* `R`      Refresh the rebase amended buffer.
+* `gd`     Diff against the branch under the cursor.
+* `ra`     Abort the rebase
+* `rc`     Continue to the next patch.
+* `rs`     Skip the current patch
+
+
 DIFF FILES
 ==========
 The diff files buffer is used to diff against another branch. It displays all

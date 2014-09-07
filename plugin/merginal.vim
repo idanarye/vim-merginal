@@ -1,6 +1,8 @@
 function! s:openBasedOnMergeMode() abort
     if merginal#isRebaseMode()
         call merginal#openRebaseConflictsBuffer()
+    elseif merginal#isRebaseAmendMode()
+        call merginal#openRebaseAmendBuffer()
     elseif merginal#isMergeMode()
         call merginal#openMergeConflictsBuffer()
     else
@@ -20,6 +22,11 @@ function! s:toggleBasedOnMergeMode() abort
         if getbufvar(l:merginalBufferNumber,'merginal_repo').dir()==l:repo.dir()
             if merginal#isRebaseMode()
                 if 'Merginal:Rebase'==l:merginalBufferName
+                    call merginal#closeMerginalBuffer()
+                    return
+                endif
+            elseif merginal#isRebaseAmendMode()
+                if 'Merginal:RebaseAmend'==l:merginalBufferName
                     call merginal#closeMerginalBuffer()
                     return
                 endif

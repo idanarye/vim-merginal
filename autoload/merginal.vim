@@ -329,6 +329,11 @@ function! merginal#isRebaseMode()
     return isdirectory(fugitive#repo().dir('rebase-apply'))
 endfunction
 
+"Check if the current buffer's repo is in rebase amend mode
+function! merginal#isRebaseAmendMode()
+    return isdirectory(fugitive#repo().dir('rebase-merge'))
+endfunction
+
 "Check if the current buffer's repo is in merge mode
 function! merginal#isMergeMode()
     "Use glob() to check for file existence
@@ -637,6 +642,7 @@ endfunction
 "Opens the diff files buffer
 function! s:diffWithBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
+                \|| 'Merginal:RebaseAmend'==bufname('')
         let l:branch=merginal#branchDetails('.')
         if l:branch.isCurrent
             throw 'Can not diff against the current branch'
@@ -953,13 +959,68 @@ endfunction
 "Run various rebase actions
 function! s:rebaseAction(remoteAction)
     if 'Merginal:Rebase'==bufname('')
+                \|| 'Merginal:RebaseAmend'==bufname('')
         echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager rebase --'.a:remoteAction)
         call merginal#reloadBuffers()
         if merginal#isRebaseMode()
             call merginal#tryRefreshRebaseConflictsBuffer(0)
+        elseif merginal#isRebaseAmendMode()
+            call merginal#tryRefreshRebaseAmendBuffer()
         else
             "If we finished rebasing - close the rebase conflicts buffer
             wincmd q
         endif
     endif
+endfunction
+
+
+
+"Open the rebase amend buffer
+function! merginal#openRebaseAmendBuffer(...)
+    let l:currentFile=expand('%:~:.')
+    if merginal#openTuiBuffer('Merginal:RebaseAmend',get(a:000,1,bufwinnr('Merginal:')))
+        doautocmd User Merginal_RebaseAmend
+    endif
+
+    "At any rate, refresh the buffer:
+    call merginal#tryRefreshRebaseAmendBuffer()
+endfunction
+
+autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
+autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
+autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
+autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
+autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
+
+function! merginal#tryRefreshRebaseAmendBuffer()
+    if 'Merginal:RebaseAmend'==bufname('')
+        "let l:gitStatusOutput=split(merginal#system(b:merginal_repo.git_command('status','--all')),'\r\n\|\n\|\r')
+        let l:currentLine=line('.')
+        let l:newBufferLines=[]
+        let l:amendedCommit=readfile(b:merginal_repo.dir('rebase-merge','amend'))
+        let l:amendedCommitShort=merginal#system(b:merginal_repo.git_command('rev-parse','--short',l:amendedCommit[0]))
+        let l:amendedCommitShort=substitute(l:amendedCommitShort,'\v[\r\n]','','g')
+        let l:amendedCommitMessage=readfile(b:merginal_repo.dir('rebase-merge','message'))
+        call add(l:newBufferLines,'=== Amending '.l:amendedCommitShort.' ===')
+        let l:newBufferLines+=l:amendedCommitMessage
+        call add(l:newBufferLines,repeat('=',len(l:newBufferLines[0])))
+        call add(l:newBufferLines,'')
+
+        let b:headerLinesCount=len(l:newBufferLines)+1
+
+        let l:branchList=split(merginal#system(b:merginal_repo.git_command('branch','--all')),'\r\n\|\n\|\r')
+        "The first line is a reminder that we are rebasing
+        "call remove(l:branchList,0)
+        let l:newBufferLines+=l:branchList
+
+
+        setlocal modifiable
+        "Clear the buffer:
+        normal ggdG
+        "Write the new buffer lines:
+        call setline(1,l:newBufferLines)
+        "call setline(1,l:branchList)
+        setlocal nomodifiable
+    endif
+    return 0
 endfunction
