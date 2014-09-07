@@ -62,6 +62,7 @@ following keymaps to interact with the branches:
            cursor. If there are rebase conflicts, the rebase conflicts buffer will open in place of
            the branch list buffer.
 * `ps`     Prompt to choose a remote to push the branch under the cursor.
+* `pS`     Prompt to choose a remote to force push the branch under the cursor.
 * `pl`     Prompt to choose a remote to pull the branch under the cursor.
 * `pf`     Prompt to choose a remote to fetch the branch under the cursor.
 * `gd`     Diff against the branch under the cursor.

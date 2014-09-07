@@ -359,9 +359,10 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> rb :call <SID>rebaseBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push')<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull')<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch')<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',0)<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',1)<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',0)<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
 augroup END
 
@@ -515,7 +516,7 @@ function! s:rebaseBranchUnderCursor()
 endfunction
 
 "Run various remote actions
-function! s:remoteActionForBranchUnderCursor(remoteAction)
+function! s:remoteActionForBranchUnderCursor(remoteAction,force)
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         if l:branch.isLocal
@@ -589,6 +590,13 @@ function! s:remoteActionForBranchUnderCursor(remoteAction)
             unlet l:remoteBranchName
         endif
 
+        let l:gitCommandWithArgs=[a:remoteAction]
+        if a:force
+            call add(l:gitCommandWithArgs,'--force')
+        endif
+
+        let l:reloadBuffers=0
+
         "Pulling requires the --no-commit flag
         if 'pull'==a:remoteAction
             if exists('l:remoteBranchName')
@@ -596,22 +604,30 @@ function! s:remoteActionForBranchUnderCursor(remoteAction)
             else
                 let l:remoteBranchNameAsPrefix=''
             endif
-            execute '!'.b:merginal_repo.git_command(a:remoteAction,'--no-commit').' '.shellescape(l:chosenRemote).' '.l:remoteBranchNameAsPrefix.shellescape(l:localBranchName)
-            call merginal#reloadBuffers()
+            let l:remoteBranchEscapedName=l:remoteBranchNameAsPrefix.shellescape(l:localBranchName)
+            call add(l:gitCommandWithArgs,'--no-commit')
+            let l:reloadBuffers=1
+
         elseif 'push'==a:remoteAction
             if exists('l:remoteBranchName')
                 let l:remoteBranchNameAsSuffix=':'.shellescape(l:remoteBranchName)
             else
                 let l:remoteBranchNameAsSuffix=''
             endif
-            execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:localBranchName).l:remoteBranchNameAsSuffix
+            let l:remoteBranchEscapedName=shellescape(l:localBranchName).l:remoteBranchNameAsSuffix
+
         elseif 'fetch'==a:remoteAction
             if exists('l:remoteBranchName')
                 let l:targetBranchName=l:remoteBranchName
             else
                 let l:targetBranchName=l:localBranchName
             endif
+            let l:remoteBranchEscapedName=shellescape(l:targetBranchName)
             execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:targetBranchName)
+        endif
+        execute '!'.call(b:merginal_repo.git_command,l:gitCommandWithArgs,b:merginal_repo).' '.shellescape(l:chosenRemote).' '.l:remoteBranchEscapedName
+        if l:reloadBuffers
+            call merginal#reloadBuffers()
         endif
         call merginal#tryRefreshBranchListBuffer(0)
     endif
