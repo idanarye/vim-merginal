@@ -18,6 +18,7 @@ offers interactive TUI for:
 * Merging branches
 * Rebasing branches
 * Solving merge conflicts
+* Renaming branches
 
 
 REQUIREMENTS                                         *merginal-requirements*
@@ -76,6 +77,7 @@ pl     Prompt to choose a remote to pull the branch under the cursor.
 pf     Prompt to choose a remote to fetch the branch under the cursor.
 gd     Open |merginal-diff-files| buffer to diff against the branch under the
        cursor.
+rn     Prompt to rename the branch under the cursor.
 
 
 MERGE CONFLICTS                                   *merginal-merge-conflicts*

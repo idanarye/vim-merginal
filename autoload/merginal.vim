@@ -369,6 +369,7 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> rn :call <SID>renameBranchUnderCursor()<Cr>
 augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
@@ -648,6 +649,31 @@ function! s:diffWithBranchUnderCursor()
             throw 'Can not diff against the current branch'
         endif
         call merginal#openDiffFilesBuffer(l:branch)
+    endif
+endfunction
+
+
+"Prompts for a new name to the branch and renames it
+function! s:renameBranchUnderCursor()
+    if 'Merginal:Branches'==bufname('')
+        let l:branch=merginal#branchDetails('.')
+        if !l:branch.isLocal
+            throw 'Can not rename - not a local branch'
+        endif
+        let l:newName=input('Rename `'.l:branch.handle.'` to: ',l:branch.name)
+        echo ' '
+        if empty(l:newName)
+            echo 'Branch rename canceled by the user'
+            return
+        elseif l:newName==l:branch.name
+            echo 'Branch name was not modified'
+            return
+        endif
+
+        let l:gitCommand=b:merginal_repo.git_command('branch','-m',l:branch.name,l:newName)
+        let l:result=merginal#system(l:gitCommand)
+        echo l:result
+        call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
 

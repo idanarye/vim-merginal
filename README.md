@@ -13,6 +13,7 @@ offers interactive TUI for:
  * Solving merge conflicts
  * Interacting with remotes(pulling, pushing, fetching, tracking)
  * Diffing against other branches
+ * Renaming branches
 
 
 REQUIREMENTS
@@ -66,6 +67,7 @@ following keymaps to interact with the branches:
 * `pl`     Prompt to choose a remote to pull the branch under the cursor.
 * `pf`     Prompt to choose a remote to fetch the branch under the cursor.
 * `gd`     Diff against the branch under the cursor.
+* `rn`     Prompt to rename the branch under the cursor.
 
 Run `:help merginal-branch-list` for more info.
 
