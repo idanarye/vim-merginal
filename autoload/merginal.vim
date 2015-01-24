@@ -319,7 +319,7 @@ endfunction
 
 function! merginal#getRemoteBranchTrackedByLocalBranch(localBranchName)
     let l:result=merginal#system(b:merginal_repo.git_command('branch','--list',a:localBranchName,'-vv'))
-    echo l:result
+    echom l:result
     return matchstr(l:result,'\v\[\zs[^\[\]:]*\ze[\]:]')
 endfunction
 
@@ -409,7 +409,7 @@ endfunction
 function! s:checkoutBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
     endif
@@ -426,12 +426,12 @@ function! s:trackBranchUnderCursor(promptForName)
         if a:promptForName
             let l:newBranchName=input('Track `'.l:branch.handle.'` as: ',l:newBranchName)
             if empty(l:newBranchName)
-                echo ' '
-                echo 'Branch tracking canceled by the user'
+                echom ' '
+                echom 'Branch tracking canceled by the user'
                 return
             endif
         endif
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName).' --track '.shellescape(l:branch.handle))
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName).' --track '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
     endif
@@ -442,11 +442,11 @@ function! s:promptToCreateNewBranch()
     if 'Merginal:Branches'==bufname('')
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
             if empty(l:newBranchName)
-                echo ' '
-                echo 'Branch creation canceled by the user'
+                echom ' '
+                echom 'Branch creation canceled by the user'
                 return
             endif
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(1)
     endif
@@ -465,16 +465,16 @@ function! s:deleteBranchUnderCursor()
         endif
         if l:answer
             if l:branch.isLocal
-                echo ' '
-                echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
+                echom ' '
+                echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
             else
                 execute '!'.b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name)
             endif
             call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
         else
-            echo ' '
-            echo 'Branch deletion canceled by the user'
+            echom ' '
+            echom 'Branch deletion canceled by the user'
         endif
     endif
 endfunction
@@ -483,8 +483,8 @@ endfunction
 function! s:mergeBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echo ' '
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
+        echom ' '
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         if v:shell_error
             call merginal#openMergeConflictsBuffer(winnr())
@@ -512,8 +512,8 @@ endfunction
 function! s:rebaseBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echo ' '
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'rebase '.shellescape(l:branch.handle))
+        echom ' '
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'rebase '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         if v:shell_error
             call merginal#openRebaseConflictsBuffer(winnr())
@@ -554,7 +554,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,force)
             let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
 
             let l:remoteBranchNameCanadidate=merginal#getRemoteBranchTrackedByLocalBranch(l:branch.name)
-            echo ' '
+            echom ' '
             if !empty(l:remoteBranchNameCanadidate)
                 "Check that this is the same remote:
                 if l:remoteBranchNameCanadidate=~'\V\^'.escape(l:chosenRemote,'\').'/'
@@ -661,18 +661,18 @@ function! s:renameBranchUnderCursor()
             throw 'Can not rename - not a local branch'
         endif
         let l:newName=input('Rename `'.l:branch.handle.'` to: ',l:branch.name)
-        echo ' '
+        echom ' '
         if empty(l:newName)
-            echo 'Branch rename canceled by the user'
+            echom 'Branch rename canceled by the user'
             return
         elseif l:newName==l:branch.name
-            echo 'Branch name was not modified'
+            echom 'Branch name was not modified'
             return
         endif
 
         let l:gitCommand=b:merginal_repo.git_command('branch','-m',l:branch.name,l:newName)
         let l:result=merginal#system(l:gitCommand)
-        echo l:result
+        echom l:result
         call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
@@ -773,7 +773,7 @@ function! s:addConflictedFileToStagingArea()
         if empty(l:file.name)
             return
         endif
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager add '.shellescape(fnamemodify(l:file.name,':p')))
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager add '.shellescape(fnamemodify(l:file.name,':p')))
 
         if 'Merginal:Conflicts'==bufname('')
             if merginal#tryRefreshMergeConflictsBuffer(0)
@@ -788,8 +788,8 @@ function! s:addConflictedFileToStagingArea()
             endif
         else
             if merginal#tryRefreshRebaseConflictsBuffer(0)
-                echo 'Added the last file of this patch.'
-                echo 'Continue to the next patch(y/n)?'
+                echom 'Added the last file of this patch.'
+                echom 'Continue to the next patch(y/n)?'
                 let l:answer=getchar()
                 if char2nr('y')==l:answer || char2nr('Y')==l:answer
                     call s:rebaseAction('continue')
@@ -937,13 +937,13 @@ function! s:checkoutDiffFileUnderCursor()
             let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`?(type "yes" to confirm) ')
         endif
         if l:answer
-            echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffBranch.handle)
+            echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffBranch.handle)
                         \.' -- '.shellescape(l:diffFile.fileFullPath))
             call merginal#reloadBuffers()
             call merginal#tryRefreshDiffFilesBuffer()
         else
-            echo ' '
-            echo 'File checkout canceled by the user'
+            echom ' '
+            echom 'File checkout canceled by the user'
         endif
     endif
 endfunction
@@ -986,7 +986,7 @@ endfunction
 function! s:rebaseAction(remoteAction)
     if 'Merginal:Rebase'==bufname('')
                 \|| 'Merginal:RebaseAmend'==bufname('')
-        echo merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager rebase --'.a:remoteAction)
+        echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager rebase --'.a:remoteAction)
         call merginal#reloadBuffers()
         if merginal#isRebaseMode()
             call merginal#tryRefreshRebaseConflictsBuffer(0)
