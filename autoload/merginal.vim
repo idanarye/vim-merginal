@@ -426,7 +426,7 @@ function! s:trackBranchUnderCursor(promptForName)
         if a:promptForName
             let l:newBranchName=input('Track `'.l:branch.handle.'` as: ',l:newBranchName)
             if empty(l:newBranchName)
-                echom ' '
+                echom
                 echom 'Branch tracking canceled by the user'
                 return
             endif
@@ -442,7 +442,7 @@ function! s:promptToCreateNewBranch()
     if 'Merginal:Branches'==bufname('')
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
             if empty(l:newBranchName)
-                echom ' '
+                echom
                 echom 'Branch creation canceled by the user'
                 return
             endif
@@ -465,7 +465,7 @@ function! s:deleteBranchUnderCursor()
         endif
         if l:answer
             if l:branch.isLocal
-                echom ' '
+                echom
                 echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
             else
                 execute '!'.b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name)
@@ -473,7 +473,7 @@ function! s:deleteBranchUnderCursor()
             call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
         else
-            echom ' '
+            echom
             echom 'Branch deletion canceled by the user'
         endif
     endif
@@ -483,7 +483,7 @@ endfunction
 function! s:mergeBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echom ' '
+        echom
         echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         if v:shell_error
@@ -512,7 +512,7 @@ endfunction
 function! s:rebaseBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echom ' '
+        echom
         echom merginal#runGitCommandInTreeReturnResult(b:merginal_repo,'rebase '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         if v:shell_error
@@ -554,7 +554,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,force)
             let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
 
             let l:remoteBranchNameCanadidate=merginal#getRemoteBranchTrackedByLocalBranch(l:branch.name)
-            echom ' '
+            echom
             if !empty(l:remoteBranchNameCanadidate)
                 "Check that this is the same remote:
                 if l:remoteBranchNameCanadidate=~'\V\^'.escape(l:chosenRemote,'\').'/'
@@ -661,7 +661,7 @@ function! s:renameBranchUnderCursor()
             throw 'Can not rename - not a local branch'
         endif
         let l:newName=input('Rename `'.l:branch.handle.'` to: ',l:branch.name)
-        echom ' '
+        echom
         if empty(l:newName)
             echom 'Branch rename canceled by the user'
             return
@@ -942,7 +942,7 @@ function! s:checkoutDiffFileUnderCursor()
             call merginal#reloadBuffers()
             call merginal#tryRefreshDiffFilesBuffer()
         else
-            echom ' '
+            echom
             echom 'File checkout canceled by the user'
         endif
     endif
