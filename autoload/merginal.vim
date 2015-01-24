@@ -153,8 +153,13 @@ function! s:cleanup_term_codes(s)
 endfunction
 
 function! merginal#runGitCommandInTreeEcho(repo,command)
-    for l:line in merginal#runGitCommandInTreeReturnResultLines(a:repo, a:command)
-        echom "[output]" s:cleanup_term_codes(l:line)
+    let l:lines = merginal#runGitCommandInTreeReturnResultLines(a:repo, a:command)
+    if len(l:lines) == 1
+        " Output a single/empty line to make Vim wait for Enter.
+        echo ' '
+    endif
+    for l:line in l:lines
+        echo "[output]" s:cleanup_term_codes(l:line)
     endfor
 endfunction
 
@@ -329,7 +334,7 @@ endfunction
 
 function! merginal#getRemoteBranchTrackedByLocalBranch(localBranchName)
     let l:result=merginal#system(b:merginal_repo.git_command('branch','--list',a:localBranchName,'-vv'))
-    echom l:result
+    echo l:result
     return matchstr(l:result,'\v\[\zs[^\[\]:]*\ze[\]:]')
 endfunction
 
@@ -436,8 +441,8 @@ function! s:trackBranchUnderCursor(promptForName)
         if a:promptForName
             let l:newBranchName=input('Track `'.l:branch.handle.'` as: ',l:newBranchName)
             if empty(l:newBranchName)
-                echom
-                echom 'Branch tracking canceled by the user'
+                echo ' '
+                echom 'Branch tracking canceled by user.'
                 return
             endif
         endif
@@ -452,8 +457,8 @@ function! s:promptToCreateNewBranch()
     if 'Merginal:Branches'==bufname('')
         let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
             if empty(l:newBranchName)
-                echom
-                echom 'Branch creation canceled by the user'
+                echo ' '
+                echom 'Branch creation canceled by user.'
                 return
             endif
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
@@ -475,7 +480,6 @@ function! s:deleteBranchUnderCursor()
         endif
         if l:answer
             if l:branch.isLocal
-                echom
                 call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
             else
                 execute '!'.b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name)
@@ -483,8 +487,8 @@ function! s:deleteBranchUnderCursor()
             call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
         else
-            echom
-            echom 'Branch deletion canceled by the user'
+            echo ' '
+            echom 'Branch deletion canceled by user.'
         endif
     endif
 endfunction
@@ -493,7 +497,6 @@ endfunction
 function! s:mergeBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echom
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         if v:shell_error
@@ -522,7 +525,6 @@ endfunction
 function! s:rebaseBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        echom
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'rebase '.shellescape(l:branch.handle))
         call merginal#reloadBuffers()
         if v:shell_error
@@ -564,7 +566,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,force)
             let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
 
             let l:remoteBranchNameCanadidate=merginal#getRemoteBranchTrackedByLocalBranch(l:branch.name)
-            echom
+            echo ' '
             if !empty(l:remoteBranchNameCanadidate)
                 "Check that this is the same remote:
                 if l:remoteBranchNameCanadidate=~'\V\^'.escape(l:chosenRemote,'\').'/'
@@ -671,18 +673,18 @@ function! s:renameBranchUnderCursor()
             throw 'Can not rename - not a local branch'
         endif
         let l:newName=input('Rename `'.l:branch.handle.'` to: ',l:branch.name)
-        echom
+        echo ' '
         if empty(l:newName)
-            echom 'Branch rename canceled by the user'
+            echom 'Branch rename canceled by user.'
             return
         elseif l:newName==l:branch.name
-            echom 'Branch name was not modified'
+            echom 'Branch name was not modified.'
             return
         endif
 
         let l:gitCommand=b:merginal_repo.git_command('branch','-m',l:branch.name,l:newName)
         let l:result=merginal#system(l:gitCommand)
-        echom l:result
+        echo l:result
         call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
@@ -798,8 +800,8 @@ function! s:addConflictedFileToStagingArea()
             endif
         else
             if merginal#tryRefreshRebaseConflictsBuffer(0)
-                echom 'Added the last file of this patch.'
-                echom 'Continue to the next patch(y/n)?'
+                echo 'Added the last file of this patch.'
+                echo 'Continue to the next patch (y/N)?'
                 let l:answer=getchar()
                 if char2nr('y')==l:answer || char2nr('Y')==l:answer
                     call s:rebaseAction('continue')
@@ -944,7 +946,7 @@ function! s:checkoutDiffFileUnderCursor()
 
         let l:answer=1
         if !empty(glob(l:diffFile.fileFullPath))
-            let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`?(type "yes" to confirm) ')
+            let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`? (type "yes" to confirm) ')
         endif
         if l:answer
             call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffBranch.handle)
@@ -952,8 +954,8 @@ function! s:checkoutDiffFileUnderCursor()
             call merginal#reloadBuffers()
             call merginal#tryRefreshDiffFilesBuffer()
         else
-            echom
-            echom 'File checkout canceled by the user'
+            echo
+            echom 'File checkout canceled by user.'
         endif
     endif
 endfunction
