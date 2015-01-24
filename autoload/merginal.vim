@@ -473,10 +473,10 @@ function! s:deleteBranchUnderCursor()
         let l:branch=merginal#branchDetails('.')
         let l:answer=0
         if l:branch.isLocal
-            let l:answer='yes'==input('Delete branch `'.l:branch.handle.'`?(type "yes" to confirm) ')
+            let l:answer='yes'==input('Delete branch `'.l:branch.handle.'`? (type "yes" to confirm) ')
         elseif l:branch.isRemote
             "Deleting remote branches needs a special warning
-            let l:answer='yes-remote'==input('Delete remote(!) branch `'.l:branch.handle.'`?(type "yes-remote" to confirm) ')
+            let l:answer='yes-remote'==input('Delete remote(!) branch `'.l:branch.handle.'`? (type "yes-remote" to confirm) ')
         endif
         if l:answer
             if l:branch.isLocal
