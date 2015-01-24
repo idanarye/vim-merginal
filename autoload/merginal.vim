@@ -395,11 +395,10 @@ function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
 
         setlocal modifiable
         "Clear the buffer:
-        normal ggdG
+        silent normal! gg"_dG
         "Write the branch list:
         call setline(1,l:branchList)
         setlocal nomodifiable
-
 
         if a:jumpToCurrentBranch
             "Find the current branch's index
@@ -731,7 +730,7 @@ function! s:refreshConflictsBuffer(fileToJumpTo,headerLines)
 
     setlocal modifiable
     "Clear the buffer:
-    normal ggdG
+    silent normal! gg"_dG
     "Write the branch list:
     call setline(1,a:headerLines+l:conflicts)
     let b:headerLinesCount=len(a:headerLines)
@@ -880,7 +879,7 @@ function! merginal#tryRefreshDiffFilesBuffer()
 
         setlocal modifiable
         "Clear the buffer:
-        normal ggdG
+        silent normal! gg"_dG
         "Write the diff files list:
         call setline(1,l:diffFiles)
         setlocal nomodifiable
@@ -1054,7 +1053,7 @@ function! merginal#tryRefreshRebaseAmendBuffer()
 
         setlocal modifiable
         "Clear the buffer:
-        normal ggdG
+        silent normal! gg"_dG
         "Write the new buffer lines:
         call setline(1,l:newBufferLines)
         "call setline(1,l:branchList)
