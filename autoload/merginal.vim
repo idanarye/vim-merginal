@@ -140,13 +140,8 @@ endfunction
 
 "Like merginal#runGitCommandInTreeReturnResult but split result to lines
 function! merginal#runGitCommandInTreeReturnResultLines(repo,command)
-    let l:dir=getcwd()
-    execute 'cd '.fnameescape(a:repo.tree())
-    try
-        return split(merginal#system(a:repo.git_command().' '.a:command),'\r\n\|\n\|\r')
-    finally
-        execute 'cd '.fnameescape(l:dir)
-    endtry
+    return split(merginal#runGitCommandInTreeReturnResult(a:repo, a:command),
+                \ '\r\n\|\n\|\r')
 endfunction
 
 "Returns 1 if there was a merginal bufffer to close
