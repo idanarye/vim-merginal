@@ -98,9 +98,9 @@ and offers the following keymaps:
            that was the last conflicted file, prompt the user to continue to
            the next patch.
 * `A`      Same as aa.
-* `ra`     Abort the rebase
+* `ra`     Abort the rebase.
 * `rc`     Continue to the next patch.
-* `rs`     Skip the current patch
+* `rs`     Skip the current patch.
 
 
 REBASE AMEND
@@ -108,28 +108,28 @@ REBASE AMEND
 
 The rebase amend buffer is shown when you amend a patch during a rebase. It
 shows the amended commit's shortened hash and commit message. Additionally, it
-shows all the branches so you can diff against them while the patch. If offers
-the folloing keymaps:
+shows all the branches so you can diff against them. If offers the following
+keymaps:
 
-* `R`      Refresh the rebase amended buffer.
+* `R`      Refresh the rebase amend buffer.
 * `gd`     Diff against the branch under the cursor.
 * `ra`     Abort the rebase
 * `rc`     Continue to the next patch.
-* `rs`     Skip the current patch
+* `rs`     Skip the current patch.
 
 
 DIFF FILES
 ==========
 The diff files buffer is used to diff against another branch. It displays all
 the differences between the currently checked out branch and the branch it was
-opened against, and offerts the following keymaps:
+opened against, and offers the following keymaps:
 
 * `R`      Refresh the diff files list.
-* `<Cr>`   Open the file under the cursor(if it exists in the currently checked
+* `<Cr>`   Open the file under the cursor (if it exists in the currently checked
            out branch).
-* `ds`     Split-diff against the file under the cursor(if it exists in the other
-           branch)
-* `ds`     VSplit-diff against the file under the cursor(if it exists in the other
-           branch)
-* `co`     Check out the file under the cursor(if it exists in the other branch)
+* `ds`     Split-diff against the file under the cursor (if it exists in the other
+           branch).
+* `ds`     VSplit-diff against the file under the cursor (if it exists in the other
+           branch).
+* `co`     Check out the file under the cursor (if it exists in the other branch)
            into the current branch.
