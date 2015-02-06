@@ -365,6 +365,7 @@ function! merginal#openBranchListBuffer(...)
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
 
+augroup merginal
     autocmd!
     autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
     autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
@@ -380,10 +381,11 @@ endfunction
     autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> rb :call <SID>rebaseBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',1)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',0)<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',[])<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pr :call <SID>remoteActionForBranchUnderCursor('pull',['--rebase'])<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> rn :call <SID>renameBranchUnderCursor()<Cr>
 augroup END
@@ -534,7 +536,7 @@ function! s:rebaseBranchUnderCursor()
 endfunction
 
 "Run various remote actions
-function! s:remoteActionForBranchUnderCursor(remoteAction,force)
+function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         if l:branch.isLocal
@@ -609,9 +611,9 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,force)
         endif
 
         let l:gitCommandWithArgs=[a:remoteAction]
-        if a:force
-            call add(l:gitCommandWithArgs,'--force')
-        endif
+        for l:flag in a:flags
+            call add(l:gitCommandWithArgs,l:flag)
+        endfor
 
         let l:reloadBuffers=0
 

@@ -66,6 +66,7 @@ following keymaps to interact with the branches:
 * `ps`     Prompt to choose a remote to push the branch under the cursor.
 * `pS`     Prompt to choose a remote to force push the branch under the cursor.
 * `pl`     Prompt to choose a remote to pull the branch under the cursor.
+* `pr`     Prompt to choose a remote to pull-rebase the branch under the cursor.
 * `pf`     Prompt to choose a remote to fetch the branch under the cursor.
 * `gd`     Diff against the branch under the cursor.
 * `rn`     Prompt to rename the branch under the cursor.

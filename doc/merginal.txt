@@ -75,6 +75,7 @@ rb     Rebase the currently checked out branch against the branch under the
 ps     Prompt to choose a remote to push the branch under the cursor.
 pS     Prompt to choose a remote to force push the branch under the cursor.
 pl     Prompt to choose a remote to pull the branch under the cursor.
+pr     Prompt to choose a remote to pull-rebase the branch under the cursor.
 pf     Prompt to choose a remote to fetch the branch under the cursor.
 gd     Open |merginal-diff-files| buffer to diff against the branch under the
        cursor.
