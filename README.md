@@ -49,7 +49,8 @@ THE BRANCH LIST
 The branch list shows a list of branches. While in that list, you can use the
 following keymaps to interact with the branches:
 
-* `R`      Refresh the buffer list.
+* `q`      Close the branch list.
+* `R`      Refresh the branch list.
 * `C`/`cc` Checkout the branch under the cursor.
 * `A`/`aa` Create a new branch from the currently checked out branch. You'll be
            prompted to enter a name for the new branch.
@@ -78,6 +79,7 @@ MERGE CONFLICTS
 The merge conflicts buffer is used to solve merge conflicts. It shows all the
 files that have merge conflicts and offers the following keymaps:
 
+* `q`      Close the merge conflicts list.
 * `R`      Refresh the merge conflicts list.
 * `<Cr>`   Open the conflicted file under the cursor.
 * `A`/`aa` Add the conflicted file under the cursor to the staging area. If that
@@ -92,6 +94,7 @@ The rebase conflicts buffer is used to solve rebase conflicts. It shows the
 currently applied commit message and all the files that have rebase conflicts,
 and offers the following keymaps:
 
+* `q`      Close the rebase conflicts list.
 * `R`      Refresh the rebase conflicts list.
 * `<Cr>`   Open the conflicted file under the cursor.
 * `aa`     Add the conflicted file under the cursor to the staging area. If
@@ -111,6 +114,7 @@ shows the amended commit's shortened hash and commit message. Additionally, it
 shows all the branches so you can diff against them. If offers the following
 keymaps:
 
+* `q`      Close the rebase amend buffer.
 * `R`      Refresh the rebase amend buffer.
 * `gd`     Diff against the branch under the cursor.
 * `ra`     Abort the rebase
@@ -124,6 +128,7 @@ The diff files buffer is used to diff against another branch. It displays all
 the differences between the currently checked out branch and the branch it was
 opened against, and offers the following keymaps:
 
+* `q`      Close the diff files list.
 * `R`      Refresh the diff files list.
 * `<Cr>`   Open the file under the cursor (if it exists in the currently checked
            out branch).

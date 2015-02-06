@@ -365,8 +365,8 @@ function! merginal#openBranchListBuffer(...)
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
 
-augroup merginal
     autocmd!
+    autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
     autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
@@ -703,6 +703,7 @@ function! merginal#openMergeConflictsBuffer(...)
 endfunction
 
 augroup merginal
+    autocmd User Merginal_MergeConflicts nnoremap <buffer> q <C-w>q
     autocmd User Merginal_MergeConflicts nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
     autocmd User Merginal_MergeConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
     autocmd User Merginal_MergeConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
@@ -825,6 +826,7 @@ function! merginal#openDiffFilesBuffer(diffBranch,...)
 endfunction
 
 augroup merginal
+    autocmd User Merginal_DiffFiles nnoremap <buffer> q <C-w>q
     autocmd User Merginal_DiffFiles nnoremap <buffer> R :call merginal#tryRefreshDiffFilesBuffer()<Cr>
     autocmd User Merginal_DiffFiles nnoremap <buffer> <Cr> :call <SID>openDiffFileUnderCursor()<Cr>
     autocmd User Merginal_DiffFiles nnoremap <buffer> ds :call <SID>openDiffFileUnderCursorAndDiff('s')<Cr>
@@ -973,6 +975,7 @@ function! merginal#openRebaseConflictsBuffer(...)
 endfunction
 
 augroup merginal
+    autocmd User Merginal_RebaseConflicts nnoremap <buffer> q <C-w>q
     autocmd User Merginal_RebaseConflicts nnoremap <buffer> R :call merginal#tryRefreshRebaseConflictsBuffer(0)<Cr>
     autocmd User Merginal_RebaseConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
     autocmd User Merginal_RebaseConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
