@@ -1146,6 +1146,8 @@ endfunction
 augroup merginal
     autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
     autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-p> :call <SID>moveToNextOrPreviousCommit(-1)<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-n> :call <SID>moveToNextOrPreviousCommit(1)<Cr>
     autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
     autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
     autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
@@ -1160,6 +1162,9 @@ function! merginal#tryRefreshHistoryLogBuffer()
                     \ merginal#system(b:merginal_repo.git_command(
                     \                '--no-pager', 'log', '--format='.l:entryFormat, b:merginal_branch.handle)),
                     \ '\r\n\|\n\|\r')
+        if empty(l:logLines[len(l:logLines) - 1])
+            call remove(l:logLines, len(l:logLines) - 1)
+        endif
         let l:currentLine=line('.')
 
         setlocal modifiable
@@ -1203,3 +1208,30 @@ function! s:diffWithCommitUnderCursor()
         call merginal#openDiffFilesBuffer(l:commitHash)
     endif
 endfunction
+
+function! s:moveToNextOrPreviousCommit(direction)
+    if 'Merginal:HistoryLog'==bufname('')
+        let l:line = line('.')
+
+        "Find the first line of the current commit
+        while !empty(getline(l:line - 1))
+            let l:line -= 1
+        endwhile
+
+        "Find the first line of the next/prev commit
+        let l:line += a:direction
+        while !empty(getline(l:line - 1))
+            let l:line += a:direction
+        endwhile
+
+        if l:line <= 0 || line('$') <= l:line
+            "We reached past the first/last commit - go back!
+            let l:line -= a:direction
+            while !empty(getline(l:line - 1))
+                let l:line -= a:direction
+            endwhile
+        endif
+        execute l:line
+    endif
+endfunction
+
