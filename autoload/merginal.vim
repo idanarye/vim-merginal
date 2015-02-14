@@ -710,7 +710,7 @@ function! s:diffWithBranchUnderCursor()
         if l:branch.isCurrent
             throw 'Can not diff against the current branch'
         endif
-        call merginal#openDiffFilesBuffer(l:branch)
+        call merginal#openDiffFilesBuffer(l:branch.handle)
     endif
 endfunction
 
@@ -873,13 +873,13 @@ function! s:addConflictedFileToStagingArea()
 endfunction
 
 
-"Open the diff files buffer for diffing agains another branch
-function! merginal#openDiffFilesBuffer(branch,...)
+"Open the diff files buffer for diffing agains another branch/commit
+function! merginal#openDiffFilesBuffer(diffTarget,...)
     if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
         doautocmd User Merginal_DiffFiles
     endif
 
-    let b:merginal_branch=a:branch
+    let b:merginal_diffTarget=a:diffTarget
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshDiffFilesBuffer()
@@ -933,11 +933,11 @@ function! merginal#diffFileDetails(lineNumber)
     return l:result
 endfunction
 
-"If the current buffer is a branch list buffer - refresh it!
+"If the current buffer is a diff files buffer - refresh it!
 function! merginal#tryRefreshDiffFilesBuffer()
     if 'Merginal:Diff'==bufname('')
-        let l:branch=b:merginal_branch
-        let l:diffFiles=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'diff --name-status '.shellescape(l:branch.handle))
+        let l:diffTarget=b:merginal_diffTarget
+        let l:diffFiles=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'diff --name-status '.shellescape(l:diffTarget))
         let l:currentLine=line('.')
 
         setlocal modifiable
@@ -977,7 +977,7 @@ function! s:openDiffFileUnderCursorAndDiff(diffType)
         endif
 
         let l:repo=b:merginal_repo
-        let l:branch=b:merginal_branch
+        let l:diffTarget=b:merginal_diffTarget
 
         "Close currently open git diffs
         let l:currentWindowBuffer=winbufnr('.')
@@ -993,11 +993,11 @@ function! s:openDiffFileUnderCursorAndDiff(diffType)
 
         call merginal#openFileDecidedWindow(l:repo,l:diffFile.fileFullPath)
 
-        execute ':G'.a:diffType.'diff '.fnameescape(l:branch.handle)
+        execute ':G'.a:diffType.'diff '.fnameescape(l:diffTarget)
     endif
 endfunction
 
-"Checks out the file from the other branch to the current branch
+"Checks out the file from the diff target to the current branch
 function! s:checkoutDiffFileUnderCursor()
     if 'Merginal:Diff'==bufname('')
         let l:diffFile=merginal#diffFileDetails('.')
@@ -1011,7 +1011,7 @@ function! s:checkoutDiffFileUnderCursor()
             let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`? (type "yes" to confirm) ')
         endif
         if l:answer
-            call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_branch.handle)
+            call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffTarget)
                         \.' -- '.shellescape(l:diffFile.fileFullPath))
             call merginal#reloadBuffers()
             call merginal#tryRefreshDiffFilesBuffer()
@@ -1087,12 +1087,14 @@ function! merginal#openRebaseAmendBuffer(...)
     call merginal#tryRefreshRebaseAmendBuffer()
 endfunction
 
-autocmd User Merginal_RebaseAmend nnoremap <buffer> q <C-w>q
-autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
-autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
+augroup merginal
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> q <C-w>q
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
+augroup END
 
 function! merginal#tryRefreshRebaseAmendBuffer()
     if 'Merginal:RebaseAmend'==bufname('')
@@ -1143,12 +1145,15 @@ function! merginal#openHistoryLogBuffer(logBranch,...)
     call merginal#tryRefreshHistoryLogBuffer()
 endfunction
 
-autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
-autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
-autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
-autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
-autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
-autocmd User Merginal_HistoryLog nnoremap <buffer> cc :call <SID>checkoutCommitUnderCurosr()<Cr>
+augroup merginal
+    autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
+    autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> cc :call <SID>checkoutCommitUnderCurosr()<Cr>
+    autocmd User Merginal_HistoryLog nnoremap <buffer> gd :call <SID>diffWithCommitUnderCursor()<Cr>
+augroup END
 
 function! merginal#tryRefreshHistoryLogBuffer()
     if 'Merginal:HistoryLog'==bufname('')
@@ -1190,5 +1195,13 @@ function! s:checkoutCommitUnderCurosr()
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(l:commitHash))
         call merginal#reloadBuffers()
         call merginal#tryRefreshBranchListBuffer(0)
+    endif
+endfunction
+
+"Opens the diff files buffer
+function! s:diffWithCommitUnderCursor()
+    if 'Merginal:HistoryLog'==bufname('')
+        let l:commitHash = merginal#commitHash('.')
+        call merginal#openDiffFilesBuffer(l:commitHash)
     endif
 endfunction
