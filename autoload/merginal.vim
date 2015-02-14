@@ -315,6 +315,53 @@ function! merginal#fileDetails(lineNumber)
     return l:result
 endfunction
 
+"For the commit in the specified line, retrieve it's hash
+function! merginal#commitHash(lineNumber)
+    if !exists('b:merginal_repo')
+        throw 'Unable to get commit details outside the merginal window'
+    endif
+    if line(a:lineNumber)<=b:headerLinesCount
+        throw 'Unable to get commit details for the header of the merginal window'
+    endif
+    "echo a:lineNumber
+    if type(0) == type(a:lineNumber)
+        let l:lineNumber = a:lineNumber
+    else
+        let l:lineNumber = line(a:lineNumber)
+    endif
+    while b:headerLinesCount < l:lineNumber && !empty(getline(l:lineNumber))
+        let l:lineNumber -= 1
+    endwhile
+    let l:lineNumber += 1
+    return split(getline(l:lineNumber))[0]
+endfunction
+
+"For the commit in the specified line, retrieve:
+" - fullHash
+" - authorName
+" - timestamp
+" - subject
+" - body
+function! merginal#commitDetails(lineNumber)
+    let l:commitHash = merginal#commitHash(a:lineNumber)
+    let l:entryFormat = join(['%H', '%aN', '%aE', '%ai', '%B'], '%x01')
+    let l:commitLines = split(
+                \ merginal#system(b:merginal_repo.git_command('--no-pager', 'log', '-1', '--format='.l:entryFormat, l:commitHash)),
+                \ '\%x01')
+    let l:result = {}
+
+    let l:result.fullHash    = l:commitLines[0]
+    let l:result.authorName  = l:commitLines[1]
+    let l:result.authorEmail = l:commitLines[2]
+    let l:result.timestamp   = l:commitLines[3]
+
+    let l:commitMessage = split(l:commitLines[4], '\r\n\|\n\|\r')
+    let l:result.subject = l:commitMessage[0]
+    let l:result.body    = join(l:commitMessage[2 :], "\n")
+
+    return l:result
+endfunction
+
 function! merginal#getLocalBranchNamesThatTrackARemoteBranch(remoteBranchName)
     "Get verbose list of branches
     let l:branchList=split(merginal#system(b:merginal_repo.git_command('branch','-vv')),'\r\n\|\n\|\r')
@@ -388,6 +435,7 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> rn :call <SID>renameBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
 augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
@@ -691,6 +739,16 @@ function! s:renameBranchUnderCursor()
     endif
 endfunction
 
+"Opens the history log buffer
+function! s:historyLogForBranchUnderCursor()
+    if 'Merginal:Branches'==bufname('')
+                \|| 'Merginal:RebaseAmend'==bufname('')
+        let l:branch=merginal#branchDetails('.')
+        call merginal#openHistoryLogBuffer(l:branch)
+    endif
+endfunction
+
+
 
 
 "Open the merge conflicts buffer for resolving merge conflicts
@@ -816,12 +874,12 @@ endfunction
 
 
 "Open the diff files buffer for diffing agains another branch
-function! merginal#openDiffFilesBuffer(diffBranch,...)
+function! merginal#openDiffFilesBuffer(branch,...)
     if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
         doautocmd User Merginal_DiffFiles
     endif
 
-    let b:merginal_diffBranch=a:diffBranch
+    let b:merginal_branch=a:branch
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshDiffFilesBuffer()
@@ -878,8 +936,8 @@ endfunction
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshDiffFilesBuffer()
     if 'Merginal:Diff'==bufname('')
-        let l:diffBranch=b:merginal_diffBranch
-        let l:diffFiles=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'diff --name-status '.shellescape(l:diffBranch.handle))
+        let l:branch=b:merginal_branch
+        let l:diffFiles=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'diff --name-status '.shellescape(l:branch.handle))
         let l:currentLine=line('.')
 
         setlocal modifiable
@@ -919,7 +977,7 @@ function! s:openDiffFileUnderCursorAndDiff(diffType)
         endif
 
         let l:repo=b:merginal_repo
-        let l:diffBranch=b:merginal_diffBranch
+        let l:branch=b:merginal_branch
 
         "Close currently open git diffs
         let l:currentWindowBuffer=winbufnr('.')
@@ -935,7 +993,7 @@ function! s:openDiffFileUnderCursorAndDiff(diffType)
 
         call merginal#openFileDecidedWindow(l:repo,l:diffFile.fileFullPath)
 
-        execute ':G'.a:diffType.'diff '.fnameescape(l:diffBranch.handle)
+        execute ':G'.a:diffType.'diff '.fnameescape(l:branch.handle)
     endif
 endfunction
 
@@ -953,7 +1011,7 @@ function! s:checkoutDiffFileUnderCursor()
             let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`? (type "yes" to confirm) ')
         endif
         if l:answer
-            call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffBranch.handle)
+            call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_branch.handle)
                         \.' -- '.shellescape(l:diffFile.fileFullPath))
             call merginal#reloadBuffers()
             call merginal#tryRefreshDiffFilesBuffer()
@@ -1029,6 +1087,7 @@ function! merginal#openRebaseAmendBuffer(...)
     call merginal#tryRefreshRebaseAmendBuffer()
 endfunction
 
+autocmd User Merginal_RebaseAmend nnoremap <buffer> q <C-w>q
 autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
 autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
 autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
@@ -1037,7 +1096,6 @@ autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranch
 
 function! merginal#tryRefreshRebaseAmendBuffer()
     if 'Merginal:RebaseAmend'==bufname('')
-        "let l:gitStatusOutput=split(merginal#system(b:merginal_repo.git_command('status','--all')),'\r\n\|\n\|\r')
         let l:currentLine=line('.')
         let l:newBufferLines=[]
         let l:amendedCommit=readfile(b:merginal_repo.dir('rebase-merge','amend'))
@@ -1066,4 +1124,57 @@ function! merginal#tryRefreshRebaseAmendBuffer()
         setlocal nomodifiable
     endif
     return 0
+endfunction
+
+
+
+
+
+"Open the history log buffer
+function! merginal#openHistoryLogBuffer(logBranch,...)
+    let l:currentFile=expand('%:~:.')
+    if merginal#openTuiBuffer('Merginal:HistoryLog',get(a:000,1,bufwinnr('Merginal:')))
+        doautocmd User Merginal_HistoryLog
+    endif
+
+    let b:merginal_branch=a:logBranch
+
+    "At any rate, refresh the buffer:
+    call merginal#tryRefreshHistoryLogBuffer()
+endfunction
+
+autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
+autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
+autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommit('fuller')<Cr>
+
+function! merginal#tryRefreshHistoryLogBuffer()
+    if 'Merginal:HistoryLog'==bufname('')
+        let l:entryFormat = '%h %aN%n%ai%n%s%n'
+        let l:logLines = split(
+                    \ merginal#system(b:merginal_repo.git_command(
+                    \                '--no-pager', 'log', '--format='.l:entryFormat, b:merginal_branch.handle)),
+                    \ '\r\n\|\n\|\r')
+        let l:currentLine=line('.')
+
+        setlocal modifiable
+        "Clear the buffer:
+        silent normal! gg"_dG
+        "Write the log lines:
+        call setline(1,l:logLines)
+        setlocal nomodifiable
+
+        execute l:currentLine
+    endif
+    return 0
+endfunction
+
+function! s:printCommit(format)
+    if 'Merginal:HistoryLog'==bufname('')
+        let l:commitHash = merginal#commitHash('.')
+        "Not using merginal#runGitCommandInTreeEcho because we are insterested
+        "in the result as more than just git command output. Also - using
+        "git-log with -1 instead of git-show because for some reason git-show
+        "ignores the --format flag...
+        echo merginal#system(b:merginal_repo.git_command('--no-pager', 'log', '-1', '--format='.a:format, l:commitHash))
+    endif
 endfunction
