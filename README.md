@@ -135,7 +135,7 @@ opened against, and offers the following keymaps:
            out branch).
 * `ds`     Split-diff against the file under the cursor (if it exists in the other
            branch).
-* `ds`     VSplit-diff against the file under the cursor (if it exists in the other
+* `dv`     VSplit-diff against the file under the cursor (if it exists in the other
            branch).
 * `co`     Check out the file under the cursor (if it exists in the other branch)
            into the current branch.
