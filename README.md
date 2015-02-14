@@ -14,6 +14,7 @@ offers interactive TUI for:
  * Interacting with remotes(pulling, pushing, fetching, tracking)
  * Diffing against other branches
  * Renaming branches
+ * Viewing git history for branches
 
 
 REQUIREMENTS
@@ -70,6 +71,7 @@ following keymaps to interact with the branches:
 * `pf`     Prompt to choose a remote to fetch the branch under the cursor.
 * `gd`     Diff against the branch under the cursor.
 * `rn`     Prompt to rename the branch under the cursor.
+* `gl`     View the history of the branch under the cursor.
 
 Run `:help merginal-branch-list` for more info.
 
@@ -118,6 +120,7 @@ keymaps:
 * `q`      Close the rebase amend buffer.
 * `R`      Refresh the rebase amend buffer.
 * `gd`     Diff against the branch under the cursor.
+* `gl`     View the history of the branch under the cursor.
 * `ra`     Abort the rebase
 * `rc`     Continue to the next patch.
 * `rs`     Skip the current patch.
@@ -139,3 +142,21 @@ opened against, and offers the following keymaps:
            branch).
 * `co`     Check out the file under the cursor (if it exists in the other branch)
            into the current branch.
+
+
+HISTORY LOG
+===========
+
+The history log buffer is used to show the history of a branch. It shows, for
+each commit in the branch, the author, date and commit message subject, and
+offers the following keymaps:
+
+* `q`      Close the history log buffer.
+* `R`      Refresh the history log buffer.
+* `<C-p>`  Move the cursor to the previous commit.
+* `<C-n>`  Move the cursor to the next commit.
+* `ss`     Echo the commit details(using git's `--format=fuller`).
+* `S`      Same as ss.
+* `cc`     Checkout the commit under the cursor.
+* `C`      Same as cc.
+* `gd`     Diff against the commit under the cursor.
