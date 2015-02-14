@@ -707,9 +707,6 @@ function! s:diffWithBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
                 \|| 'Merginal:RebaseAmend'==bufname('')
         let l:branch=merginal#branchDetails('.')
-        if l:branch.isCurrent
-            throw 'Can not diff against the current branch'
-        endif
         call merginal#openDiffFilesBuffer(l:branch.handle)
     endif
 endfunction
@@ -1094,6 +1091,7 @@ augroup merginal
     autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
     autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
     autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
+    autocmd User Merginal_RebaseAmend nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
 augroup END
 
 function! merginal#tryRefreshRebaseAmendBuffer()
