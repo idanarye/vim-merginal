@@ -1145,7 +1145,10 @@ endfunction
 
 autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
 autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
-autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommit('fuller')<Cr>
+autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
+autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
+autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
+autocmd User Merginal_HistoryLog nnoremap <buffer> cc :call <SID>checkoutCommitUnderCurosr()<Cr>
 
 function! merginal#tryRefreshHistoryLogBuffer()
     if 'Merginal:HistoryLog'==bufname('')
@@ -1168,7 +1171,8 @@ function! merginal#tryRefreshHistoryLogBuffer()
     return 0
 endfunction
 
-function! s:printCommit(format)
+"Exactly what it says on tin
+function! s:printCommitUnderCurosr(format)
     if 'Merginal:HistoryLog'==bufname('')
         let l:commitHash = merginal#commitHash('.')
         "Not using merginal#runGitCommandInTreeEcho because we are insterested
@@ -1176,5 +1180,15 @@ function! s:printCommit(format)
         "git-log with -1 instead of git-show because for some reason git-show
         "ignores the --format flag...
         echo merginal#system(b:merginal_repo.git_command('--no-pager', 'log', '-1', '--format='.a:format, l:commitHash))
+    endif
+endfunction
+
+"Exactly what it says on tin
+function! s:checkoutCommitUnderCurosr()
+    if 'Merginal:HistoryLog'==bufname('')
+        let l:commitHash = merginal#commitHash('.')
+        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(l:commitHash))
+        call merginal#reloadBuffers()
+        call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
