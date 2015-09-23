@@ -424,9 +424,10 @@ augroup merginal
     autocmd User Merginal_BranchList nnoremap <buffer> aa :call <SID>promptToCreateNewBranch()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> dd :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor([])<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor([])<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
+    autocmd User Merginal_BranchList nnoremap <buffer> mn :call <SID>mergeBranchUnderCursor(['--no-ff'])<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> rb :call <SID>rebaseBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
@@ -544,10 +545,14 @@ function! s:deleteBranchUnderCursor()
 endfunction
 
 "If there are merge conflicts, opens the merge conflicts buffer
-function! s:mergeBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'merge --no-commit '.shellescape(l:branch.handle))
+function! s:mergeBranchUnderCursor(flags)
+    if 'Merginal:Branches' == bufname('')
+        let l:branch = merginal#branchDetails('.')
+        let l:gitCommand = 'merge --no-commit '.shellescape(l:branch.handle)
+        for l:flag in a:flags
+            let l:gitCommand .= ' '.shellescape(l:flag)
+        endfor
+        call merginal#runGitCommandInTreeEcho(b:merginal_repo, l:gitCommand)
         call merginal#reloadBuffers()
         if v:shell_error
             call merginal#openMergeConflictsBuffer(winnr())

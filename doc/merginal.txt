@@ -4,7 +4,7 @@
 Author:  Idan Arye <https://github.com/idanarye/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 1.5.0
+Version: 1.5.0+
 
 INTRODUCTION                                                      *merginal*
 
@@ -69,6 +69,9 @@ mm     Merge the branch under the cursor into the currently checked out
 M      Same as mm.
 mf     Merge the branch under the cursor into the currently checked out branch
        using Fugitive's |:Gmerge| command.
+mn     Merge the branch under the cursor using the --no-ff flag, forcing the
+       creation of a merge commit even when the merge resolves as a
+       fast-forward.
 rb     Rebase the currently checked out branch against the branch under the
        cursor. If there are rebase conflicts, the |merginal-rebase-conflicts|
        buffer will open in place of

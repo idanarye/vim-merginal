@@ -61,6 +61,8 @@ following keymaps to interact with the branches:
            buffer will open in place of the branch list buffer.
 * `mf`     Merge the branch under the cursor into the currently checked out branch
            using Fugitive's `:Gmerge` command.
+* `mn`     Merge the branch under the cursor using the --no-ff flag, forcing the
+           creation of a merge commit even when the merge resolves as a fast-forward.
 * `rb`     Rebase the currently checked out branch against the branch under the
            cursor. If there are rebase conflicts, the rebase conflicts buffer will open in place of
            the branch list buffer.
