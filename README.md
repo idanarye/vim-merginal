@@ -162,3 +162,24 @@ offers the following keymaps:
 * `cc`     Checkout the commit under the cursor.
 * `C`      Same as cc.
 * `gd`     Diff against the commit under the cursor.
+* `cc`     Cherry-pick the commit under the cursor into the currently checked out
+           branch. If there are cherry-pick conflicts, the
+           cherry-pick conflicts buffer will open in place of the
+           history log buffer.
+
+
+CHERRY-PICK CONFLICTS
+=====================
+
+The cherry-pick conflicts buffer is used to solve cherry-pick conflicts. It
+shows the cherry-picked commit message and all the files that have cherry-pick
+conflicts, and offers the following keymaps:
+
+* `R`      Refresh the cherry-pick conflicts list.
+* `<Cr>`   Open the conflicted file under the cursor.
+* `aa`     Add the conflicted file under the cursor to the staging area. If that
+*          was the last conflicted file, prompt the user to continue to the next
+*          patch.
+* `A`      Same as aa.
+* `ra`     Abort the cherry-pick.
+* `rc`     Continue to the next patch.

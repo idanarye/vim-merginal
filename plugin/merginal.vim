@@ -5,6 +5,8 @@ function! s:openBasedOnMergeMode() abort
         call merginal#openRebaseAmendBuffer()
     elseif merginal#isMergeMode()
         call merginal#openMergeConflictsBuffer()
+    elseif merginal#isCherryPickMode()
+        call merginal#openCherryPickConflictsBuffer()
     else
         call merginal#openBranchListBuffer()
     endif
