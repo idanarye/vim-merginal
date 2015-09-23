@@ -482,7 +482,9 @@ function! s:checkoutBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
-        call merginal#reloadBuffers()
+        if !v:shell_error
+            call merginal#reloadBuffers()
+        endif
         call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
@@ -504,7 +506,9 @@ function! s:trackBranchUnderCursor(promptForName)
             endif
         endif
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName).' --track '.shellescape(l:branch.handle))
-        call merginal#reloadBuffers()
+        if !v:shell_error
+            call merginal#reloadBuffers()
+        endif
         call merginal#tryRefreshBranchListBuffer(0)
     endif
 endfunction
@@ -559,15 +563,21 @@ function! s:mergeBranchUnderCursor(flags)
             let l:gitCommand .= ' '.shellescape(l:flag)
         endfor
         call merginal#runGitCommandInTreeEcho(b:merginal_repo, l:gitCommand)
-        call merginal#reloadBuffers()
-        if v:shell_error
-            call merginal#openMergeConflictsBuffer(winnr())
-        elseif merginal#isMergeMode()
-            "If we are in merge mode without a shell error, that means there
-            "are not conflicts and the user can be prompted to enter a merge
-            "message.
-            Gstatus
-            call merginal#closeMerginalBuffer()
+        if merginal#isMergeMode()
+            call merginal#reloadBuffers()
+            if v:shell_error
+                call merginal#openMergeConflictsBuffer(winnr())
+            else
+                "If we are in merge mode without a shell error, that means there
+                "are not conflicts and the user can be prompted to enter a merge
+                "message.
+                Gstatus
+                call merginal#closeMerginalBuffer()
+            endif
+        else
+            if !v:shell_error
+                call merginal#reloadBuffers()
+            end
         endif
     endif
 endfunction
@@ -587,9 +597,13 @@ function! s:rebaseBranchUnderCursor()
     if 'Merginal:Branches'==bufname('')
         let l:branch=merginal#branchDetails('.')
         call merginal#runGitCommandInTreeEcho(b:merginal_repo,'rebase '.shellescape(l:branch.handle))
-        call merginal#reloadBuffers()
         if v:shell_error
-            call merginal#openRebaseConflictsBuffer(winnr())
+            if merginal#isRebaseMode()
+                call merginal#reloadBuffers()
+                call merginal#openRebaseConflictsBuffer(winnr())
+            endif
+        else
+            call merginal#reloadBuffers()
         endif
     endif
 endfunction
@@ -1240,10 +1254,13 @@ function! s:cherryPickCommitUnderCursor()
         let l:commitHash = merginal#commitHash('.')
         let l:gitCommand = 'cherry-pick '.shellescape(l:commitHash)
         call merginal#runGitCommandInTreeEcho(b:merginal_repo, l:gitCommand)
-        call merginal#reloadBuffers()
-        echo 'shell error be '.v:shell_error
         if v:shell_error
-            call merginal#openCherryPickConflictsBuffer(winnr())
+            if merginal#isCherryPickMode()
+                call merginal#reloadBuffers()
+                call merginal#openCherryPickConflictsBuffer(winnr())
+            endif
+        else
+            call merginal#reloadBuffers()
         endif
     endif
 endfunction
