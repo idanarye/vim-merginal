@@ -179,7 +179,11 @@ function! merginal#closeMerginalBuffer()
             endif
             return 1
         finally
-            execute l:currentWindow.'wincmd w'
+            "If it's the merginal window that we close, there is no window to
+            "return to...
+            if l:merginalWindowNumber != l:currentWindow
+                execute l:currentWindow.'wincmd w'
+            endif
         endtry
     end
     return 0
