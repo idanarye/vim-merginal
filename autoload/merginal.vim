@@ -489,7 +489,7 @@ function! s:checkoutBranchUnderCursor()
         if !v:shell_error
             call merginal#reloadBuffers()
         endif
-        call merginal#tryRefreshBranchListBuffer(0)
+        call merginal#tryRefreshBranchListBuffer(1)
     endif
 endfunction
 
