@@ -422,33 +422,6 @@ function! merginal#openBranchListBuffer(...)
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
 
-augroup merginal
-    autocmd!
-    autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ct :call <SID>trackBranchUnderCursor(0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> cT :call <SID>trackBranchUnderCursor(1)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> aa :call <SID>promptToCreateNewBranch()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> dd :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor([])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor([])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mn :call <SID>mergeBranchUnderCursor(['--no-ff'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> rb :call <SID>rebaseBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pr :call <SID>remoteActionForBranchUnderCursor('pull',['--rebase'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> rn :call <SID>renameBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
-augroup END
-
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
     if 'Merginal:Branches'==bufname('')
@@ -788,13 +761,6 @@ function! merginal#openMergeConflictsBuffer(...)
     call merginal#tryRefreshMergeConflictsBuffer(l:currentFile)
 endfunction
 
-augroup merginal
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-augroup END
 
 "Returns 1 if all merges are done
 function! s:refreshConflictsBuffer(fileToJumpTo,headerLines)
@@ -924,14 +890,6 @@ function! merginal#openDiffFilesBuffer(diffTarget,...)
     call merginal#tryRefreshDiffFilesBuffer()
 endfunction
 
-augroup merginal
-    autocmd User Merginal_DiffFiles nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_DiffFiles nnoremap <buffer> R :call merginal#tryRefreshDiffFilesBuffer()<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> <Cr> :call <SID>openDiffFileUnderCursor()<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> ds :call <SID>openDiffFileUnderCursorAndDiff('s')<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> dv :call <SID>openDiffFileUnderCursorAndDiff('v')<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> co :call <SID>checkoutDiffFileUnderCursor()<Cr>
-augroup END
 
 
 "For the diff file in the specified line, retrieve:
@@ -1073,16 +1031,6 @@ function! merginal#openRebaseConflictsBuffer(...)
     call merginal#tryRefreshRebaseConflictsBuffer(l:currentFile)
 endfunction
 
-augroup merginal
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> R :call merginal#tryRefreshRebaseConflictsBuffer(0)<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-augroup END
 
 "Returns 1 if all rebase conflicts are done
 function! merginal#tryRefreshRebaseConflictsBuffer(fileToJumpTo)
@@ -1126,15 +1074,6 @@ function! merginal#openRebaseAmendBuffer(...)
     call merginal#tryRefreshRebaseAmendBuffer()
 endfunction
 
-augroup merginal
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
-augroup END
 
 function! merginal#tryRefreshRebaseAmendBuffer()
     if 'Merginal:RebaseAmend'==bufname('')
@@ -1185,18 +1124,6 @@ function! merginal#openHistoryLogBuffer(logBranch,...)
     call merginal#tryRefreshHistoryLogBuffer()
 endfunction
 
-augroup merginal
-    autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-p> :call <SID>moveToNextOrPreviousCommit(-1)<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-n> :call <SID>moveToNextOrPreviousCommit(1)<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> cc :call <SID>checkoutCommitUnderCurosr()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> gd :call <SID>diffWithCommitUnderCursor()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> cp :call <SID>cherryPickCommitUnderCursor()<Cr>
-augroup END
 
 function! merginal#tryRefreshHistoryLogBuffer()
     if 'Merginal:HistoryLog'==bufname('')
@@ -1310,16 +1237,6 @@ function! merginal#openCherryPickConflictsBuffer(...)
     "At any rate, refresh the buffer:
     call merginal#tryRefreshCherryPickConflictsBuffer(l:currentFile)
 endfunction
-
-augroup merginal
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> R :call merginal#tryRefreshCherryPickConflictsBuffer(0)<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> ca :call <SID>cherryPickAction('abort')<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> cc :call <SID>cherryPickAction('continue')<Cr>
-augroup END
 
 "Returns 1 if all cherry-pick conflicts are done
 function! merginal#tryRefreshCherryPickConflictsBuffer(fileToJumpTo)
