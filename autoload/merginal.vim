@@ -15,6 +15,8 @@ function! merginal#system(command,...)
     endif
 endfunction
 
+
+
 "Opens a file that belongs to a repo in a window that already belongs to that
 "repo. Creates a new window if can't find suitable window.
 function! merginal#openFileDecidedWindow(repo,fileName)
@@ -166,7 +168,7 @@ endfunction
 
 "Returns 1 if there was a merginal bufffer to close
 function! merginal#closeMerginalBuffer()
-    let l:merginalWindowNumber=bufwinnr('Merginal:')
+    let l:merginalWindowNumber=bufwinnr('Merginal: ')
     if 0<=l:merginalWindowNumber
         let l:currentWindow=winnr()
         try
@@ -612,9 +614,9 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
                 let l:listForInputlist=map(copy(l:remotes),'v:key+1.") ".v:val')
                 "Choose the correct text accoring to the action:
                 if 'push'==a:remoteAction
-                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to:')
+                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to: ')
                 else
-                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from:')
+                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from: ')
                 endif
                 let l:chosenRemoteIndex=inputlist(l:listForInputlist)
 
@@ -651,7 +653,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
                     let l:localBranchName=l:locals[0]
                 else
                     let l:listForInputlist=map(copy(l:locals),'v:key+1.") ".v:val')
-                    call insert(l:listForInputlist,'Choose local branch to push `'.l:branch.handle.'` from:')
+                    call insert(l:listForInputlist,'Choose local branch to push `'.l:branch.handle.'` from: ')
                     let l:chosenLocalIndex=inputlist(l:listForInputlist)
 
                     "Check that the chosen index is in range
@@ -682,7 +684,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
         "Pulling requires the --no-commit flag
         if 'pull'==a:remoteAction
             if exists('l:remoteBranchName')
-                let l:remoteBranchNameAsPrefix=shellescape(l:remoteBranchName).':'
+                let l:remoteBranchNameAsPrefix=shellescape(l:remoteBranchName).': '
             else
                 let l:remoteBranchNameAsPrefix=''
             endif
@@ -692,7 +694,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
 
         elseif 'push'==a:remoteAction
             if exists('l:remoteBranchName')
-                let l:remoteBranchNameAsSuffix=':'.shellescape(l:remoteBranchName)
+                let l:remoteBranchNameAsSuffix=': '.shellescape(l:remoteBranchName)
             else
                 let l:remoteBranchNameAsSuffix=''
             endif
@@ -840,7 +842,7 @@ function! s:openMergeConflictUnderCursor()
                 \|| 'Merginal:Rebase'==bufname('')
                 \|| 'Merginal:CherryPick'==bufname('')
         let l:file=merginal#fileDetails('.')
-        if empty(l:file.name)
+        if epty(l:file.name)
             return
         endif
         call merginal#openFileDecidedWindow(b:merginal_repo,l:file.name)
