@@ -15,7 +15,20 @@ function! merginal#system(command,...)
     endif
 endfunction
 
-
+function! merginal#bang(command)
+    if exists(':terminal')
+        redraw "Release 'Press ENTER or type command to continue'
+        let l:oldWinView = winsaveview()
+        botright new
+        call winrestview(l:oldWinView)
+        resize 5
+        call termopen(a:command)
+        autocmd BufWinLeave <buffer> execute winnr('#').'wincmd w'
+        normal! A
+    else
+        execute '!'.a:command
+    endif
+endfunction
 
 "Opens a file that belongs to a repo in a window that already belongs to that
 "repo. Creates a new window if can't find suitable window.
@@ -534,7 +547,7 @@ function! s:deleteBranchUnderCursor()
             if l:branch.isLocal
                 call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
             else
-                execute '!'.b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name)
+                call merginal#bang(b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name))
             endif
             call merginal#reloadBuffers()
             call merginal#tryRefreshBranchListBuffer(0)
@@ -707,9 +720,8 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
                 let l:targetBranchName=l:localBranchName
             endif
             let l:remoteBranchEscapedName=shellescape(l:targetBranchName)
-            execute '!'.b:merginal_repo.git_command(a:remoteAction).' '.shellescape(l:chosenRemote).' '.shellescape(l:targetBranchName)
         endif
-        execute '!'.call(b:merginal_repo.git_command,l:gitCommandWithArgs,b:merginal_repo).' '.shellescape(l:chosenRemote).' '.l:remoteBranchEscapedName
+        call merginal#bang(call(b:merginal_repo.git_command,l:gitCommandWithArgs,b:merginal_repo).' '.shellescape(l:chosenRemote).' '.l:remoteBranchEscapedName)
         if l:reloadBuffers
             call merginal#reloadBuffers()
         endif
