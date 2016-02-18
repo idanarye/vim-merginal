@@ -414,7 +414,6 @@ endfunction
 
 augroup merginal
     autocmd!
-    autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
     autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
