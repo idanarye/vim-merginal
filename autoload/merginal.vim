@@ -200,13 +200,7 @@ function! merginal#openTuiBuffer(bufferName,inWindow)
         else
             40vnew
         endif
-        setlocal buftype=nofile
-        setlocal bufhidden=wipe
-        setlocal nomodifiable
-        setlocal winfixwidth
-        setlocal winfixheight
-        setlocal nonumber
-        setlocal norelativenumber
+        setlocal filetype=merginal
         execute 'silent file '.a:bufferName
         call fugitive#detect(l:repo.dir())
     endif
@@ -420,7 +414,6 @@ endfunction
 
 augroup merginal
     autocmd!
-    autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
     autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
     autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
