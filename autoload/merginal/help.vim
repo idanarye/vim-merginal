@@ -21,6 +21,7 @@ function! merginal#help#print()
     setlocal buftype=nofile
     setlocal filetype=merginalhelp
     setlocal nonumber
+    setlocal bufhidden=wipe
     call append(0, s:help_list)
     call cursor(1, 1)
     execute merginal_window . "wincmd w"
