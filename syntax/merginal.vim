@@ -11,7 +11,7 @@ highlight link merginalRemote Operator
 syntax match merginalTarget '\(-> \)\@<=.*'
 highlight link merginalTarget Type
 
-syntax keyword merginalKeyword HEAD master
+syntax keyword merginalKeyword HEAD master origin
 highlight link merginalKeyword Keyword
 
 " syntax match merginalremote '-> \@<=[a-z0-9/]\+$'
