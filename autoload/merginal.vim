@@ -181,7 +181,7 @@ endfunction
 
 "Returns 1 if there was a merginal bufffer to close
 function! merginal#closeMerginalBuffer()
-    let l:merginalWindowNumber=bufwinnr('Merginal:')
+    let l:merginalWindowNumber=bufwinnr('Merginal: ')
     if 0<=l:merginalWindowNumber
         let l:currentWindow=winnr()
         try
@@ -429,40 +429,23 @@ endfunction
 
 "Open the branch list buffer for controlling buffers
 function! merginal#openBranchListBuffer(...)
-    if merginal#openTuiBuffer('Merginal:Branches',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_BranchList
+  let l:bufferName = 'Merginal:Branches'
+    if merginal#openTuiBuffer(l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
-
-augroup merginal
-    autocmd!
-    autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ct :call <SID>trackBranchUnderCursor(0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> cT :call <SID>trackBranchUnderCursor(1)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> aa :call <SID>promptToCreateNewBranch()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> dd :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor([])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor([])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mn :call <SID>mergeBranchUnderCursor(['--no-ff'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> rb :call <SID>rebaseBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pr :call <SID>remoteActionForBranchUnderCursor('pull',['--rebase'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> rn :call <SID>renameBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
-augroup END
+"
+" FUNCTION: nerdtree#ui_glue#invokeKeyMap(key) {{{1
+"this is needed since I cant figure out how to invoke dict functions from a
+"key map
+function! merginal#invokeKeyMap(key)
+    call g:MerginalKeyMap.Invoke(a:key)
+endfunction
 
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
@@ -473,8 +456,10 @@ function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
         setlocal modifiable
         "Clear the buffer:
         silent normal! gg"_dG
+        "Print help
+        call merginal#printHelpInSameBuffer()
         "Write the branch list:
-        call setline(1,l:branchList)
+        call setline('.',l:branchList)
         setlocal nomodifiable
 
         if a:jumpToCurrentBranch
@@ -642,9 +627,9 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
                 let l:listForInputlist=map(copy(l:remotes),'v:key+1.") ".v:val')
                 "Choose the correct text accoring to the action:
                 if 'push'==a:remoteAction
-                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to:')
+                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to: ')
                 else
-                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from:')
+                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from: ')
                 endif
                 let l:chosenRemoteIndex=inputlist(l:listForInputlist)
 
@@ -681,7 +666,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
                     let l:localBranchName=l:locals[0]
                 else
                     let l:listForInputlist=map(copy(l:locals),'v:key+1.") ".v:val')
-                    call insert(l:listForInputlist,'Choose local branch to push `'.l:branch.handle.'` from:')
+                    call insert(l:listForInputlist,'Choose local branch to push `'.l:branch.handle.'` from: ')
                     let l:chosenLocalIndex=inputlist(l:listForInputlist)
 
                     "Check that the chosen index is in range
@@ -712,7 +697,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
         "Pulling requires the --no-commit flag
         if 'pull'==a:remoteAction
             if exists('l:remoteBranchName')
-                let l:remoteBranchNameAsPrefix=shellescape(l:remoteBranchName).':'
+                let l:remoteBranchNameAsPrefix=shellescape(l:remoteBranchName).': '
             else
                 let l:remoteBranchNameAsPrefix=''
             endif
@@ -722,7 +707,7 @@ function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
 
         elseif 'push'==a:remoteAction
             if exists('l:remoteBranchName')
-                let l:remoteBranchNameAsSuffix=':'.shellescape(l:remoteBranchName)
+                let l:remoteBranchNameAsSuffix=': '.shellescape(l:remoteBranchName)
             else
                 let l:remoteBranchNameAsSuffix=''
             endif
@@ -794,21 +779,17 @@ endfunction
 "Open the merge conflicts buffer for resolving merge conflicts
 function! merginal#openMergeConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
-    if merginal#openTuiBuffer('Merginal:Conflicts',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_MergeConflicts
+    let l:bufferName = 'Merginal:Conflicts'
+    if merginal#openTuiBuffer(l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshMergeConflictsBuffer(l:currentFile)
 endfunction
 
-augroup merginal
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-augroup END
 
 "Returns 1 if all merges are done
 function! s:refreshConflictsBuffer(fileToJumpTo,headerLines)
@@ -833,8 +814,10 @@ function! s:refreshConflictsBuffer(fileToJumpTo,headerLines)
     setlocal modifiable
     "Clear the buffer:
     silent normal! gg"_dG
+    "Print help
+    call merginal#printHelpInSameBuffer()
     "Write the branch list:
-    call setline(1,a:headerLines+l:conflicts)
+    call setline('.',a:headerLines+l:conflicts)
     let b:headerLinesCount=len(a:headerLines)
     let l:currentLine=l:currentLine+b:headerLinesCount
     setlocal nomodifiable
@@ -871,7 +854,7 @@ function! s:openMergeConflictUnderCursor()
                 \|| 'Merginal:Rebase'==bufname('')
                 \|| 'Merginal:CherryPick'==bufname('')
         let l:file=merginal#fileDetails('.')
-        if empty(l:file.name)
+        if epty(l:file.name)
             return
         endif
         call merginal#openFileDecidedWindow(b:merginal_repo,l:file.name)
@@ -928,8 +911,11 @@ endfunction
 
 "Open the diff files buffer for diffing agains another branch/commit
 function! merginal#openDiffFilesBuffer(diffTarget,...)
-    if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_DiffFiles
+  let l:bufferName= 'Merginal:Diff'
+    if merginal#openTuiBuffer(l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     let b:merginal_diffTarget=a:diffTarget
@@ -938,14 +924,6 @@ function! merginal#openDiffFilesBuffer(diffTarget,...)
     call merginal#tryRefreshDiffFilesBuffer()
 endfunction
 
-augroup merginal
-    autocmd User Merginal_DiffFiles nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_DiffFiles nnoremap <buffer> R :call merginal#tryRefreshDiffFilesBuffer()<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> <Cr> :call <SID>openDiffFileUnderCursor()<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> ds :call <SID>openDiffFileUnderCursorAndDiff('s')<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> dv :call <SID>openDiffFileUnderCursorAndDiff('v')<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> co :call <SID>checkoutDiffFileUnderCursor()<Cr>
-augroup END
 
 
 "For the diff file in the specified line, retrieve:
@@ -996,8 +974,10 @@ function! merginal#tryRefreshDiffFilesBuffer()
         setlocal modifiable
         "Clear the buffer:
         silent normal! gg"_dG
+        "Print help
+        call merginal#printHelpInSameBuffer()
         "Write the diff files list:
-        call setline(1,l:diffFiles)
+        call setline('.',l:diffFiles)
         setlocal nomodifiable
 
         execute l:currentLine
@@ -1079,24 +1059,17 @@ endfunction
 "Open the rebase conflicts buffer for resolving rebase conflicts
 function! merginal#openRebaseConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
-    if merginal#openTuiBuffer('Merginal:Rebase',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_RebaseConflicts
+    let l:bufferName= 'Merginal:Rebase'
+    if merginal#openTuiBuffer(l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshRebaseConflictsBuffer(l:currentFile)
 endfunction
 
-augroup merginal
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> R :call merginal#tryRefreshRebaseConflictsBuffer(0)<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-augroup END
 
 "Returns 1 if all rebase conflicts are done
 function! merginal#tryRefreshRebaseConflictsBuffer(fileToJumpTo)
@@ -1132,23 +1105,17 @@ endfunction
 "Open the rebase amend buffer
 function! merginal#openRebaseAmendBuffer(...)
     let l:currentFile=expand('%:~:.')
-    if merginal#openTuiBuffer('Merginal:RebaseAmend',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_RebaseAmend
+    let l:bufferName = 'Merginal:RebaseAmend'
+    if merginal#openTuiBuffer(l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshRebaseAmendBuffer()
 endfunction
 
-augroup merginal
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
-augroup END
 
 function! merginal#tryRefreshRebaseAmendBuffer()
     if 'Merginal:RebaseAmend'==bufname('')
@@ -1174,8 +1141,10 @@ function! merginal#tryRefreshRebaseAmendBuffer()
         setlocal modifiable
         "Clear the buffer:
         silent normal! gg"_dG
+        "Print help
+        call merginal#printHelpInSameBuffer()
         "Write the new buffer lines:
-        call setline(1,l:newBufferLines)
+        call setline('.',l:newBufferLines)
         "call setline(1,l:branchList)
         setlocal nomodifiable
     endif
@@ -1189,8 +1158,11 @@ endfunction
 "Open the history log buffer
 function! merginal#openHistoryLogBuffer(logBranch,...)
     let l:currentFile=expand('%:~:.')
-    if merginal#openTuiBuffer('Merginal:HistoryLog',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_HistoryLog
+    let l:bufferName = 'Merginal:HistoryLog'
+    if merginal#openTuiBuffer( l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     let b:merginal_branch=a:logBranch
@@ -1199,18 +1171,6 @@ function! merginal#openHistoryLogBuffer(logBranch,...)
     call merginal#tryRefreshHistoryLogBuffer()
 endfunction
 
-augroup merginal
-    autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-p> :call <SID>moveToNextOrPreviousCommit(-1)<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-n> :call <SID>moveToNextOrPreviousCommit(1)<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> cc :call <SID>checkoutCommitUnderCurosr()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> gd :call <SID>diffWithCommitUnderCursor()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> cp :call <SID>cherryPickCommitUnderCursor()<Cr>
-augroup END
 
 function! merginal#tryRefreshHistoryLogBuffer()
     if 'Merginal:HistoryLog'==bufname('')
@@ -1227,8 +1187,10 @@ function! merginal#tryRefreshHistoryLogBuffer()
         setlocal modifiable
         "Clear the buffer:
         silent normal! gg"_dG
+        "Print help
+        call merginal#printHelpInSameBuffer()
         "Write the log lines:
-        call setline(1,l:logLines)
+        call setline('.',l:logLines)
         setlocal nomodifiable
 
         execute l:currentLine
@@ -1317,23 +1279,16 @@ endfunction
 function! merginal#openCherryPickConflictsBuffer(...)
     let l:currentFile = expand('%:~:.')
 
-    if merginal#openTuiBuffer('Merginal:CherryPick',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_CherryPickConflicts
+    let l:bufferName = 'Merginal:CherryPick'
+    if merginal#openTuiBuffer(l:bufferName,get(a:000,1,bufwinnr('Merginal: ')))
+      "Since these are all buffer local mappings..
+      call g:MerginalKeyMap.BindFor(l:bufferName)
+      call g:MerginalKeyMap.BindFor('all')
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshCherryPickConflictsBuffer(l:currentFile)
 endfunction
-
-augroup merginal
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> R :call merginal#tryRefreshCherryPickConflictsBuffer(0)<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> ca :call <SID>cherryPickAction('abort')<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> cc :call <SID>cherryPickAction('continue')<Cr>
-augroup END
 
 "Returns 1 if all cherry-pick conflicts are done
 function! merginal#tryRefreshCherryPickConflictsBuffer(fileToJumpTo)
@@ -1363,4 +1318,484 @@ function! s:cherryPickAction(remoteAction)
             wincmd q
         endif
     endif
+endfunction
+
+
+function! merginal#toggleHelpBuffer()
+  if exists('b:MerginalHelpEnabled') 
+    let b:MerginalHelpEnabled = !b:MerginalHelpEnabled
+  else
+    let b:MerginalHelpEnabled = 1
+  endif
+  let l:bufferName = bufname('%')
+  if l:bufferName ==# 'Merginal:Branches'
+    call merginal#tryRefreshBranchListBuffer(1)
+  elseif l:bufferName ==# 'Merginal:Diff'
+    call merginal#tryRefreshDiffFilesBuffer()
+  elseif l:bufferName ==# 'Merginal:Conflicts'
+    call merginal#tryRefreshMergeConflictsBuffer()
+  elseif l:bufferName ==# 'Merginal:Rebase'
+    call merginal#tryRefreshRebaseConflictsBuffer()
+  elseif l:bufferName ==# 'Merginal:Amend'
+    call merginal#tryRefreshRebaseAmendBuffer()
+  elseif l:bufferName ==# 'Merginal:HistoryLog'
+    call merginal#tryRefreshHistoryLogBuffer()
+  elseif l:bufferName ==# 'Merginal:CherryPick'
+    call merginal#tryRefreshCherryPickConflictsBuffer()
+  end
+endfunction 
+
+
+"Open the branch list buffer for controlling buffers
+function! merginal#printHelpInSameBuffer(...)
+  if exists('b:MerginalHelpEnabled') && b:MerginalHelpEnabled
+    let l:prevBufferName = bufname('%')
+    let g:MerginalPrevWindowNumber = bufwinnr(l:prevBufferName)
+    call g:MerginalKeyMap.BindFor('Merginal:Help')
+
+    set modifiable
+    let l:old_h = @h
+    let @h = ''
+    for keyMap in g:MerginalKeyMap.All()
+      if keyMap.scope ==# l:prevBufferName || keyMap.scope ==# 'all'
+        if !empty(keyMap.quickhelpText)
+          let @h=@h."\" ". keyMap.key .": ". keyMap.quickhelpText ."\n"
+        endif
+      endif
+    endfor
+    silent! put h
+    let @h = l:old_h
+  endif
+endfunction
+
+function! merginal#loadClassFiles()
+  runtime lib/merginal/keymaps.vim
+endfunction
+
+function! s:quitWindow()
+  echo bufname('')
+  if 'Merginal:Help'==bufname('')
+    execute "wincmd q"
+    echo g:MerginalPrevWindowNumber
+    execute (g:MerginalPrevWindowNumber-1) . "wincmd w"
+  else
+    execute "wincmd q"
+  endif
+  "Reset help on closing
+  let b:MerginalHelpEnabled = 0
+endfunction
+
+"
+" Function: s:SID()   {{{1
+function! s:SID()
+    if !exists("s:sid")
+        let s:sid = matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+    endif
+    return s:sid
+endfun
+
+function! merginal#initKeyMappings()
+  let s = '<SNR>' . s:SID() . '_'
+
+  "Merginal branches key config
+  call g:MerginalKeyMap.Create({
+        \'key' : 'q', 
+        \'scope' : 'all',
+        \'callback' :s.'quitWindow',
+        \'quickhelpText': 'Quit'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '?',
+        \ 'scope' : 'all',
+        \ 'callback' : 'merginal#toggleHelpBuffer'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' : 'merginal#tryRefreshBranchListBuffer',
+        \ 'args' :[0],
+        \ 'quickhelpText':'Refresh the branch list.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'aa',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s.'promptToCreateNewBranch',
+        \ 'quickhelpText':"Create a new branch from the currently checked out branch."
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'C',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'checkoutBranchUnderCursor',
+        \'quickhelpText':'Checkout the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'cc' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'checkoutBranchUnderCursor',
+        \'quickhelpText':'Checkout the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ct' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'trackBranchUnderCursor',
+        \ 'args' :[0],
+        \'quickhelpText':'Track the remote branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'cT' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'trackBranchUnderCursor',
+        \ 'args' :[1],
+        \'quickhelpText':'Track the remote branch under the cursor, prompting for a name.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'aa' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'promptToCreateNewBranch',
+        \'quickhelpText':'Create a new branch from the currently checked out branch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'A',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'promptToCreateNewBranch',
+        \'quickhelpText':'Create a new branch from the currently checked out branch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' :  'dd' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'deleteBranchUnderCursor',
+        \'quickhelpText':'Delete the branch under the cursor'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'D',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'deleteBranchUnderCursor',
+        \'quickhelpText':'Delete the branch under the cursor'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'mm' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'mergeBranchUnderCursor',
+        \ 'args' :[[]],
+        \'quickhelpText':'Merge the branch under the cursor into the currently checked out branch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'M',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'mergeBranchUnderCursor',
+        \ 'args' :[[]],
+        \'quickhelpText':'Merge the branch under the cursor into the currently checked out branch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'mf',
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'mergeBranchUnderCursorUsingFugitive',
+        \'quickhelpText':"Merge the branch under the cursor into the currently checked out branch using Fugitive\'s :Gmerge command."
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'mn' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'mergeBranchUnderCursor',
+        \ 'args' :[['--no-ff']],
+        \'quickhelpText':'Merge the branch under the cursor using the --no-ff flag'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'rb' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'rebaseBranchUnderCursor',
+        \'quickhelpText':'Rebase the currently checked out branch against the branch under the cursor. '
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ps' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'remoteActionForBranchUnderCursor',
+        \ 'args' :['push', []],
+        \'quickhelpText':'Prompt to choose a remote to push the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'pS' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'remoteActionForBranchUnderCursor',
+        \'args' :['push', ['--force']],
+        \'quickhelpText':'Prompt to choose a remote to force push the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'pl' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'remoteActionForBranchUnderCursor',
+        \ 'args' :['pull',[]],
+        \'quickhelpText':'Prompt to choose a remote to pull the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'pr' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'remoteActionForBranchUnderCursor',
+        \'args' :['pull', ['--rebase']],
+        \'quickhelpText':'Prompt to choose a remote to pull-rebase the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'pf' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'remoteActionForBranchUnderCursor',
+        \'args' :['fetch',[]],
+        \'quickhelpText':'Prompt to choose a remote to fetch the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'gd' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'diffWithBranchUnderCursor',
+        \'quickhelpText':'Open merginal-diff-files buffer to diff against the branch under the cursor.  '
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'rn' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'renameBranchUnderCursor',
+        \'quickhelpText':'Prompt to rename the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'gl' ,
+        \ 'scope' : 'Merginal:Branches',
+        \ 'callback' :s. 'historyLogForBranchUnderCursor',
+        \'quickhelpText':'Open merginal-history-log buffer to view the history of the branch under the cursor.'
+  \})
+
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R' ,
+        \ 'scope' : 'Merginal:Conflicts',
+        \ 'callback' : 'merginal#tryRefreshMergeConflictsBuffer',
+        \ 'args' : [0],
+        \'quickhelpText':'Refresh the merge conflicts list.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '<Cr>' ,
+        \ 'scope' : 'Merginal:Conflicts',
+        \ 'callback' : s.'openMergeConflictUnderCursor',
+        \'quickhelpText':'Open the conflicted file under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'aa' ,
+        \ 'scope' : 'Merginal:Conflicts',
+        \ 'callback' : s.'addConflictedFileToStagingArea',
+        \'quickhelpText':'Add the conflicted file under the cursor to the staging area. If that was the last conflicted file, the merge conflicts buffer will close and fugitive-:Gstatus will open.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'A',
+        \ 'scope' : 'Merginal:Conflicts',
+        \ 'callback' : s.'addConflictedFileToStagingArea',
+        \'quickhelpText':'Add the conflicted file under the cursor to the staging area. If that was the last conflicted file, the merge conflicts buffer will close and fugitive-:Gstatus will open.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R' ,
+        \ 'scope' : 'Merginal:Diff',
+        \ 'callback' : 'merginal#tryRefreshDiffFilesBuffer',
+        \'quickhelpText':'Refresh the history log buffer.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '<Cr>' ,
+        \ 'scope' : 'Merginal:Diff',
+        \ 'callback' : s.'openDiffFileUnderCursor',
+        \'quickhelpText':'Open the file under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ds' ,
+        \ 'scope' : 'Merginal:Diff',
+        \ 'callback' : s.'openDiffFileUnderCursorAndDiff',
+        \ 'args' : ['s'],
+        \'quickhelpText':'Split-diff against the file under the cursor '
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'dv' ,
+        \ 'scope' : 'Merginal:Diff',
+        \ 'callback' : s.'openDiffFileUnderCursorAndDiff',
+        \ 'args' : ['v'],
+        \'quickhelpText':'VSplit-diff against the file under the cursor '
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'co' ,
+        \ 'scope' : 'Merginal:Diff',
+        \ 'callback' : s.'checkoutDiffFileUnderCursor',
+        \'quickhelpText':'Check out the file under the cursor '
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R' ,
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : 'merginal#tryRefreshRebaseConflictsBuffer',
+        \ 'args' : [0],
+        \'quickhelpText':'Refresh the rebase amend buffer.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '<Cr>' ,
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : s.'openMergeConflictUnderCursor',
+        \'quickhelpText':'Open the conflicted file under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'aa' ,
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : s.'addConflictedFileToStagingArea',
+        \'quickhelpText':'Add the conflicted file under the cursor to the staging area. If that was the last conflicted file, prompt the user to continue to the next patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'A',
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : s.'addConflictedFileToStagingArea',
+        \'quickhelpText':'Add the conflicted file under the cursor to the staging area. If that was the last conflicted file, prompt the user to continue to the next patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ra' ,
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : s.'rebaseAction',
+        \ 'args' : ['abort'],
+        \'quickhelpText':'Abort the rebase.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'rs' ,
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : s.'rebaseAction',
+        \ 'args' : ['skip'],
+        \'quickhelpText':'Skip the current patch'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'rc' ,
+        \ 'scope' : 'Merginal:Rebase',
+        \ 'callback' : s.'rebaseAction',
+        \ 'args' : ['continue'],
+        \'quickhelpText':'Continue to the next patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R' ,
+        \ 'scope' : 'Merginal:Amend',
+        \ 'callback' : 'merginal#tryRefreshRebaseAmendBuffer',
+        \'quickhelpText':'Refresh the rebase amend buffer.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ra' ,
+        \ 'scope' : 'Merginal:Amend',
+        \ 'callback' : s.'rebaseAction',
+        \ 'args' : ['abort'],
+        \'quickhelpText':'Abort the rebase.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'rs' ,
+        \ 'scope' : 'Merginal:Amend',
+        \ 'callback' : s.'rebaseAction',
+        \ 'args' : ['skip'],
+        \'quickhelpText':'Skip the current patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'rc' ,
+        \ 'scope' : 'Merginal:Amend',
+        \ 'callback' : s.'rebaseAction',
+        \ 'args' : ['continue'],
+        \'quickhelpText':'Continue to the next patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'gd' ,
+        \ 'scope' : 'Merginal:Amend',
+        \ 'callback' : s.'diffWithBranchUnderCursor',
+        \'quickhelpText':'Open merginal-diff-files buffer to diff against the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'gl' ,
+        \ 'scope' : 'Merginal:Amend',
+        \ 'callback' : s.'historyLogForBranchUnderCursor',
+        \'quickhelpText':'Open |merginal-history-log| buffer to view the history of the branch under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R' ,
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : 'merginal#tryRefreshHistoryLogBuffer',
+        \'quickhelpText':'Refresh the history log buffer.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '<C-p>' ,
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'moveToNextOrPreviousCommit',
+        \ 'args' : [-1],
+        \'quickhelpText':'Move the cursor to the previous commit.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '<C-n>' ,
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'moveToNextOrPreviousCommit',
+        \ 'args' : [1],
+        \'quickhelpText':'Move the cursor to the next commit.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ss',
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'printCommitUnderCurosr',
+        \ 'args' : ['fuller'],
+        \'quickhelpText':"Echo the commit details(using git\'s --format=fuller)."
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'S',
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'printCommitUnderCurosr',
+        \ 'args' : ['fuller'],
+        \'quickhelpText':"Echo the commit details(using git\'s --format=fuller)."
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'C' ,
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'checkoutCommitUnderCurosr',
+        \'quickhelpText':'Checkout the commit under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'cc',
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'checkoutCommitUnderCurosr',
+        \'quickhelpText':'Checkout the commit under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'gd' ,
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'diffWithCommitUnderCursor',
+        \'quickhelpText':'Open |merginal-diff-files| buffer to diff against the commit under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'cp' ,
+        \ 'scope' : 'Merginal:HistoryLog',
+        \ 'callback' : s.'cherryPickCommitUnderCursor',
+        \'quickhelpText':'Cherry-pick the commit under the cursor into the currently checked out branch. '
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'R' ,
+        \ 'scope' : 'Merginal:CherryPick',
+        \ 'callback' : 'merginal#tryRefreshCherryPickConflictsBuffer',
+        \ 'args' : [0],
+        \'quickhelpText':'Refresh the cherry-pick conflicts list.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : '<Cr>' ,
+        \ 'scope' : 'Merginal:CherryPick',
+        \ 'callback' : s.'openMergeConflictUnderCursor',
+        \'quickhelpText':'Open the conflicted file under the cursor.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'aa' ,
+        \ 'scope' : 'Merginal:CherryPick',
+        \ 'callback' : s.'addConflictedFileToStagingArea',
+        \'quickhelpText':'Add the conflicted file under the cursor to the staging area. If that was the last conflicted file, prompt the user to continue to the next patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'A',
+        \ 'scope' : 'Merginal:CherryPick',
+        \ 'callback' : s.'addConflictedFileToStagingArea',
+        \'quickhelpText':'Add the conflicted file under the cursor to the staging area. If that was the last conflicted file, prompt the user to continue to the next patch.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'ca' ,
+        \ 'scope' : 'Merginal:CherryPick',
+        \ 'callback' : s.'cherryPickAction',
+        \ 'args' : ['abort'],
+        \'quickhelpText':'Abort the cherry-pick.'
+  \})
+  call g:MerginalKeyMap.Create({
+        \'key' : 'cc' ,
+        \ 'scope' : 'Merginal:CherryPick',
+        \ 'callback' : s.'cherryPickAction',
+        \ 'args' : ['continue'],
+        \'quickhelpText':'Continue to the next patch.'
+  \})
 endfunction
