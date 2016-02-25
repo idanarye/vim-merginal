@@ -48,9 +48,6 @@ function! s:toggleBasedOnMergeMode() abort
     call s:openBasedOnMergeMode()
 endfunction
 
-call merginal#loadClassFiles()
-call merginal#initKeyMappings()
-
 autocmd User Fugitive command! -buffer -nargs=0 Merginal call s:openBasedOnMergeMode()
 autocmd User Fugitive command! -buffer -nargs=0 MerginalToggle call s:toggleBasedOnMergeMode()
 autocmd User Fugitive command! -buffer -nargs=0 MerginalClose call merginal#closeMerginalBuffer()
