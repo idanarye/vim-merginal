@@ -430,39 +430,12 @@ endfunction
 "Open the branch list buffer for controlling buffers
 function! merginal#openBranchListBuffer(...)
     if merginal#openTuiBuffer('Merginal:Branches',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_BranchList
+        set filetype=merginal-branchlist
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshBranchListBuffer(1)
 endfunction
-
-augroup merginal
-    autocmd!
-    autocmd User Merginal_BranchList nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_BranchList nnoremap <buffer> R :call merginal#tryRefreshBranchListBuffer(0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> C :call <SID>checkoutBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> cc :call <SID>checkoutBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ct :call <SID>trackBranchUnderCursor(0)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> cT :call <SID>trackBranchUnderCursor(1)<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> A :call <SID>promptToCreateNewBranch()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> aa :call <SID>promptToCreateNewBranch()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> D :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> dd :call <SID>deleteBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> M :call <SID>mergeBranchUnderCursor([])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mm :call <SID>mergeBranchUnderCursor([])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mf :call <SID>mergeBranchUnderCursorUsingFugitive()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> mn :call <SID>mergeBranchUnderCursor(['--no-ff'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> rb :call <SID>rebaseBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pl :call <SID>remoteActionForBranchUnderCursor('pull',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pr :call <SID>remoteActionForBranchUnderCursor('pull',['--rebase'])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> rn :call <SID>renameBranchUnderCursor()<Cr>
-    autocmd User Merginal_BranchList nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
-augroup END
 
 "If the current buffer is a branch list buffer - refresh it!
 function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
@@ -496,297 +469,7 @@ function! merginal#tryRefreshBranchListBuffer(jumpToCurrentBranch)
     endif
 endfunction
 
-"Exactly what it says on tin
-function! s:checkoutBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(l:branch.handle))
-        if !v:shell_error
-            call merginal#reloadBuffers()
-        endif
-        call merginal#tryRefreshBranchListBuffer(1)
-    endif
-endfunction
 
-"Track what it says on tin
-function! s:trackBranchUnderCursor(promptForName)
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        if !l:branch.isRemote
-            throw 'Can not track - branch is not remote'
-        endif
-        let l:newBranchName=l:branch.name
-        if a:promptForName
-            let l:newBranchName=input('Track `'.l:branch.handle.'` as: ',l:newBranchName)
-            if empty(l:newBranchName)
-                echo ' '
-                echom 'Branch tracking canceled by user.'
-                return
-            endif
-        endif
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName).' --track '.shellescape(l:branch.handle))
-        if !v:shell_error
-            call merginal#reloadBuffers()
-        endif
-        call merginal#tryRefreshBranchListBuffer(0)
-    endif
-endfunction
-
-"Uses the current branch as the source
-function! s:promptToCreateNewBranch()
-    if 'Merginal:Branches'==bufname('')
-        let l:newBranchName=input('Branch `'.b:merginal_repo.head().'` to: ')
-            if empty(l:newBranchName)
-                echo ' '
-                echom 'Branch creation canceled by user.'
-                return
-            endif
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout -b '.shellescape(l:newBranchName))
-        call merginal#reloadBuffers()
-        call merginal#tryRefreshBranchListBuffer(1)
-    endif
-endfunction
-
-"Verifies the decision
-function! s:deleteBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        let l:answer=0
-        if l:branch.isLocal
-            let l:answer='yes'==input('Delete branch `'.l:branch.handle.'`? (type "yes" to confirm) ')
-        elseif l:branch.isRemote
-            "Deleting remote branches needs a special warning
-            let l:answer='yes-remote'==input('Delete remote(!) branch `'.l:branch.handle.'`? (type "yes-remote" to confirm) ')
-        endif
-        if l:answer
-            if l:branch.isLocal
-                call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager branch -D '.shellescape(l:branch.handle))
-            else
-                call merginal#bang(b:merginal_repo.git_command('push').' '.shellescape(l:branch.remote).' --delete '.shellescape(l:branch.name))
-            endif
-            call merginal#reloadBuffers()
-            call merginal#tryRefreshBranchListBuffer(0)
-        else
-            echo ' '
-            echom 'Branch deletion canceled by user.'
-        endif
-    endif
-endfunction
-
-"If there are merge conflicts, opens the merge conflicts buffer
-function! s:mergeBranchUnderCursor(flags)
-    if 'Merginal:Branches' == bufname('')
-        let l:branch = merginal#branchDetails('.')
-        let l:gitCommand = 'merge --no-commit '.shellescape(l:branch.handle)
-        for l:flag in a:flags
-            let l:gitCommand .= ' '.shellescape(l:flag)
-        endfor
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo, l:gitCommand)
-        if merginal#isMergeMode()
-            call merginal#reloadBuffers()
-            if v:shell_error
-                call merginal#openMergeConflictsBuffer(winnr())
-            else
-                "If we are in merge mode without a shell error, that means there
-                "are not conflicts and the user can be prompted to enter a merge
-                "message.
-                Gstatus
-                call merginal#closeMerginalBuffer()
-            endif
-        else
-            if !v:shell_error
-                call merginal#reloadBuffers()
-            end
-        endif
-    endif
-endfunction
-
-"Use Fugitive's :Gmerge. It was added to Fugitive after I implemented
-"Merginal's merge, and I don't want to remove it since it can still more
-"comfortable for some.
-function! s:mergeBranchUnderCursorUsingFugitive()
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        execute ':Gmerge '.l:branchName.handle
-    endif
-endfunction
-
-"If there are rebase conflicts, opens the rebase conflicts buffer
-function! s:rebaseBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'rebase '.shellescape(l:branch.handle))
-        if v:shell_error
-            if merginal#isRebaseMode()
-                call merginal#reloadBuffers()
-                call merginal#openRebaseConflictsBuffer(winnr())
-            endif
-        else
-            call merginal#reloadBuffers()
-        endif
-    endif
-endfunction
-
-"Run various remote actions
-function! s:remoteActionForBranchUnderCursor(remoteAction,flags)
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        if l:branch.isLocal
-            let l:remotes=merginal#runGitCommandInTreeReturnResultLines(b:merginal_repo,'remote')
-            if empty(l:remotes)
-                throw 'Can not '.a:remoteAction.' - no remotes defined'
-            endif
-
-            let l:chosenRemoteIndex=0
-            if 1<len(l:remotes)
-                let l:listForInputlist=map(copy(l:remotes),'v:key+1.") ".v:val')
-                "Choose the correct text accoring to the action:
-                if 'push'==a:remoteAction
-                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` to:')
-                else
-                    call insert(l:listForInputlist,'Choose remote to '.a:remoteAction.' `'.l:branch.handle.'` from:')
-                endif
-                let l:chosenRemoteIndex=inputlist(l:listForInputlist)
-
-                "Check that the chosen index is in range
-                if l:chosenRemoteIndex<=0 || len(l:remotes)<l:chosenRemoteIndex
-                    return
-                endif
-
-                let l:chosenRemoteIndex=l:chosenRemoteIndex-1
-            endif
-
-            let l:localBranchName=l:branch.name
-            let l:chosenRemote=l:remotes[l:chosenRemoteIndex]
-
-            let l:remoteBranchNameCanadidate=merginal#getRemoteBranchTrackedByLocalBranch(l:branch.name)
-            echo ' '
-            if !empty(l:remoteBranchNameCanadidate)
-                "Check that this is the same remote:
-                if l:remoteBranchNameCanadidate=~'\V\^'.escape(l:chosenRemote,'\').'/'
-                    "Remote the remote repository name
-                    let l:remoteBranchName=l:remoteBranchNameCanadidate[len(l:chosenRemote)+1:(-1)]
-                endif
-            endif
-        elseif l:branch.isRemote
-            let l:chosenRemote=l:branch.remote
-            if 'push'==a:remoteAction
-                "For push, we want to specify the remote branch name
-                let l:remoteBranchName=l:branch.name
-
-                let l:locals=merginal#getLocalBranchNamesThatTrackARemoteBranch(l:branch.handle)
-                if empty(l:locals)
-                    let l:localBranchName=l:branch.name
-                elseif 1==len(l:locals)
-                    let l:localBranchName=l:locals[0]
-                else
-                    let l:listForInputlist=map(copy(l:locals),'v:key+1.") ".v:val')
-                    call insert(l:listForInputlist,'Choose local branch to push `'.l:branch.handle.'` from:')
-                    let l:chosenLocalIndex=inputlist(l:listForInputlist)
-
-                    "Check that the chosen index is in range
-                    if l:chosenLocalIndex<=0 || len(l:locals)<l:chosenLocalIndex
-                        return
-                    endif
-
-                    let l:localBranchName=l:locals[l:chosenLocalIndex-1]
-                endif
-            else
-                "For pull and fetch, git automatically resolves the tracking
-                "branch based on the remote branch.
-                let l:localBranchName=l:branch.name
-            endif
-        endif
-
-        if exists('l:remoteBranchName') && empty(l:remoteBranchName)
-            unlet l:remoteBranchName
-        endif
-
-        let l:gitCommandWithArgs=[a:remoteAction]
-        for l:flag in a:flags
-            call add(l:gitCommandWithArgs,l:flag)
-        endfor
-
-        let l:reloadBuffers=0
-
-        "Pulling requires the --no-commit flag
-        if 'pull'==a:remoteAction
-            if exists('l:remoteBranchName')
-                let l:remoteBranchNameAsPrefix=shellescape(l:remoteBranchName).':'
-            else
-                let l:remoteBranchNameAsPrefix=''
-            endif
-            let l:remoteBranchEscapedName=l:remoteBranchNameAsPrefix.shellescape(l:localBranchName)
-            call add(l:gitCommandWithArgs,'--no-commit')
-            let l:reloadBuffers=1
-
-        elseif 'push'==a:remoteAction
-            if exists('l:remoteBranchName')
-                let l:remoteBranchNameAsSuffix=':'.shellescape(l:remoteBranchName)
-            else
-                let l:remoteBranchNameAsSuffix=''
-            endif
-            let l:remoteBranchEscapedName=shellescape(l:localBranchName).l:remoteBranchNameAsSuffix
-
-        elseif 'fetch'==a:remoteAction
-            if exists('l:remoteBranchName')
-                let l:targetBranchName=l:remoteBranchName
-            else
-                let l:targetBranchName=l:localBranchName
-            endif
-            let l:remoteBranchEscapedName=shellescape(l:targetBranchName)
-        endif
-        call merginal#bang(call(b:merginal_repo.git_command,l:gitCommandWithArgs,b:merginal_repo).' '.shellescape(l:chosenRemote).' '.l:remoteBranchEscapedName)
-        if l:reloadBuffers
-            call merginal#reloadBuffers()
-        endif
-        call merginal#tryRefreshBranchListBuffer(0)
-    endif
-endfunction
-
-
-"Opens the diff files buffer
-function! s:diffWithBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-                \|| 'Merginal:RebaseAmend'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        call merginal#openDiffFilesBuffer(l:branch.handle)
-    endif
-endfunction
-
-
-"Prompts for a new name to the branch and renames it
-function! s:renameBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        if !l:branch.isLocal
-            throw 'Can not rename - not a local branch'
-        endif
-        let l:newName=input('Rename `'.l:branch.handle.'` to: ',l:branch.name)
-        echo ' '
-        if empty(l:newName)
-            echom 'Branch rename canceled by user.'
-            return
-        elseif l:newName==l:branch.name
-            echom 'Branch name was not modified.'
-            return
-        endif
-
-        let l:gitCommand=b:merginal_repo.git_command('branch','-m',l:branch.name,l:newName)
-        let l:result=merginal#system(l:gitCommand)
-        echo l:result
-        call merginal#tryRefreshBranchListBuffer(0)
-    endif
-endfunction
-
-"Opens the history log buffer
-function! s:historyLogForBranchUnderCursor()
-    if 'Merginal:Branches'==bufname('')
-                \|| 'Merginal:RebaseAmend'==bufname('')
-        let l:branch=merginal#branchDetails('.')
-        call merginal#openHistoryLogBuffer(l:branch)
-    endif
-endfunction
 
 
 
@@ -795,20 +478,12 @@ endfunction
 function! merginal#openMergeConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
     if merginal#openTuiBuffer('Merginal:Conflicts',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_MergeConflicts
+        set filetype=merginal-conflicts
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshMergeConflictsBuffer(l:currentFile)
 endfunction
-
-augroup merginal
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> R :call merginal#tryRefreshMergeConflictsBuffer(0)<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_MergeConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-augroup END
 
 "Returns 1 if all merges are done
 function! s:refreshConflictsBuffer(fileToJumpTo,headerLines)
@@ -865,71 +540,10 @@ function! merginal#tryRefreshMergeConflictsBuffer(fileToJumpTo)
     return 0
 endfunction
 
-"Exactly what it says on tin
-function! s:openMergeConflictUnderCursor()
-    if 'Merginal:Conflicts'==bufname('')
-                \|| 'Merginal:Rebase'==bufname('')
-                \|| 'Merginal:CherryPick'==bufname('')
-        let l:file=merginal#fileDetails('.')
-        if empty(l:file.name)
-            return
-        endif
-        call merginal#openFileDecidedWindow(b:merginal_repo,l:file.name)
-    endif
-endfunction
-
-"If that was the last merge conflict, automatically opens Fugitive's status
-"buffer
-function! s:addConflictedFileToStagingArea()
-    if 'Merginal:Conflicts'==bufname('')
-                \|| 'Merginal:Rebase'==bufname('')
-                \|| 'Merginal:CherryPick'==bufname('')
-        let l:file=merginal#fileDetails('.')
-        if empty(l:file.name)
-            return
-        endif
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager add '.shellescape(fnamemodify(l:file.name,':p')))
-
-        if 'Merginal:Conflicts' == bufname('')
-            if merginal#tryRefreshMergeConflictsBuffer(0)
-                "If this returns 1, that means this is the last file, and we
-                "should open gufitive's status window
-                let l:mergeConflictsBuffer=bufnr('')
-                Gstatus
-                let l:gitStatusBuffer=bufnr('')
-                execute bufwinnr(l:mergeConflictsBuffer).'wincmd w'
-                wincmd q
-                execute bufwinnr(l:gitStatusBuffer).'wincmd w'
-            endif
-        elseif 'Merginal:Rebase' == bufname('')
-            if merginal#tryRefreshRebaseConflictsBuffer(0)
-                echo 'Added the last file of this patch.'
-                echo 'Continue to the next patch (y/N)?'
-                let l:answer=getchar()
-                if char2nr('y')==l:answer || char2nr('Y')==l:answer
-                    call s:rebaseAction('continue')
-                endif
-            endif
-        elseif 'Merginal:CherryPick' == bufname('')
-            if merginal#tryRefreshCherryPickConflictsBuffer(0)
-                "If this returns 1, that means this is the last file, and we
-                "should open gufitive's status window
-                let l:cherryPickConflictsBuffer=bufnr('')
-                Gstatus
-                let l:gitStatusBuffer=bufnr('')
-                execute bufwinnr(l:cherryPickConflictsBuffer).'wincmd w'
-                wincmd q
-                execute bufwinnr(l:gitStatusBuffer).'wincmd w'
-            endif
-        endif
-    endif
-endfunction
-
-
 "Open the diff files buffer for diffing agains another branch/commit
 function! merginal#openDiffFilesBuffer(diffTarget,...)
     if merginal#openTuiBuffer('Merginal:Diff',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_DiffFiles
+        set filetype=merginal-difffiles
     endif
 
     let b:merginal_diffTarget=a:diffTarget
@@ -937,15 +551,6 @@ function! merginal#openDiffFilesBuffer(diffTarget,...)
     "At any rate, refresh the buffer:
     call merginal#tryRefreshDiffFilesBuffer()
 endfunction
-
-augroup merginal
-    autocmd User Merginal_DiffFiles nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_DiffFiles nnoremap <buffer> R :call merginal#tryRefreshDiffFilesBuffer()<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> <Cr> :call <SID>openDiffFileUnderCursor()<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> ds :call <SID>openDiffFileUnderCursorAndDiff('s')<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> dv :call <SID>openDiffFileUnderCursorAndDiff('v')<Cr>
-    autocmd User Merginal_DiffFiles nnoremap <buffer> co :call <SID>checkoutDiffFileUnderCursor()<Cr>
-augroup END
 
 
 "For the diff file in the specified line, retrieve:
@@ -1004,99 +609,17 @@ function! merginal#tryRefreshDiffFilesBuffer()
     endif
 endfunction
 
-"Exactly what it says on tin
-function! s:openDiffFileUnderCursor()
-    if 'Merginal:Diff'==bufname('')
-        let l:diffFile=merginal#diffFileDetails('.')
-
-        if l:diffFile.isDeleted
-            throw 'File does not exist in current buffer'
-        endif
-
-        call merginal#openFileDecidedWindow(b:merginal_repo,l:diffFile.fileFullPath)
-    endif
-endfunction
-
-"Exactly what it says on tin
-function! s:openDiffFileUnderCursorAndDiff(diffType)
-    if a:diffType!='s' && a:diffType!='v'
-        throw 'Bad diff type'
-    endif
-    if 'Merginal:Diff'==bufname('')
-        let l:diffFile=merginal#diffFileDetails('.')
-
-        if l:diffFile.isAdded
-            throw 'File does not exist in other buffer'
-        endif
-
-        let l:repo=b:merginal_repo
-        let l:diffTarget=b:merginal_diffTarget
-
-        "Close currently open git diffs
-        let l:currentWindowBuffer=winbufnr('.')
-        try
-            windo if 'blob'==get(b:,'fugitive_type','') && exists('w:fugitive_diff_restore')
-                        \| bdelete
-                        \| endif
-        catch
-            "do nothing
-        finally
-            execute bufwinnr(l:currentWindowBuffer).'wincmd w'
-        endtry
-
-        call merginal#openFileDecidedWindow(l:repo,l:diffFile.fileFullPath)
-
-        execute ':G'.a:diffType.'diff '.fnameescape(l:diffTarget)
-    endif
-endfunction
-
-"Checks out the file from the diff target to the current branch
-function! s:checkoutDiffFileUnderCursor()
-    if 'Merginal:Diff'==bufname('')
-        let l:diffFile=merginal#diffFileDetails('.')
-
-        if l:diffFile.isAdded
-            throw 'File does not exist in diffed buffer'
-        endif
-
-        let l:answer=1
-        if !empty(glob(l:diffFile.fileFullPath))
-            let l:answer='yes'==input('Override `'.l:diffFile.fileInTree.'`? (type "yes" to confirm) ')
-        endif
-        if l:answer
-            call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(b:merginal_diffTarget)
-                        \.' -- '.shellescape(l:diffFile.fileFullPath))
-            call merginal#reloadBuffers()
-            call merginal#tryRefreshDiffFilesBuffer()
-        else
-            echo
-            echom 'File checkout canceled by user.'
-        endif
-    endif
-endfunction
-
 
 "Open the rebase conflicts buffer for resolving rebase conflicts
 function! merginal#openRebaseConflictsBuffer(...)
     let l:currentFile=expand('%:~:.')
     if merginal#openTuiBuffer('Merginal:Rebase',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_RebaseConflicts
+        set filetype=merginal-conflicts
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshRebaseConflictsBuffer(l:currentFile)
 endfunction
-
-augroup merginal
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> R :call merginal#tryRefreshRebaseConflictsBuffer(0)<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-    autocmd User Merginal_RebaseConflicts nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-augroup END
 
 "Returns 1 if all rebase conflicts are done
 function! merginal#tryRefreshRebaseConflictsBuffer(fileToJumpTo)
@@ -1110,45 +633,16 @@ function! merginal#tryRefreshRebaseConflictsBuffer(fileToJumpTo)
     return 0
 endfunction
 
-"Run various rebase actions
-function! s:rebaseAction(remoteAction)
-    if 'Merginal:Rebase'==bufname('')
-                \|| 'Merginal:RebaseAmend'==bufname('')
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager rebase --'.a:remoteAction)
-        call merginal#reloadBuffers()
-        if merginal#isRebaseMode()
-            call merginal#tryRefreshRebaseConflictsBuffer(0)
-        elseif merginal#isRebaseAmendMode()
-            call merginal#tryRefreshRebaseAmendBuffer()
-        else
-            "If we finished rebasing - close the rebase conflicts buffer
-            wincmd q
-        endif
-    endif
-endfunction
-
-
-
 "Open the rebase amend buffer
 function! merginal#openRebaseAmendBuffer(...)
     let l:currentFile=expand('%:~:.')
     if merginal#openTuiBuffer('Merginal:RebaseAmend',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_RebaseAmend
+        set filetype=merginal-rebaseamend
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshRebaseAmendBuffer()
 endfunction
-
-augroup merginal
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> R :call merginal#tryRefreshRebaseAmendBuffer()<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> ra :call <SID>rebaseAction('abort')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> rs :call <SID>rebaseAction('skip')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> rc :call <SID>rebaseAction('continue')<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> gd :call <SID>diffWithBranchUnderCursor()<Cr>
-    autocmd User Merginal_RebaseAmend nnoremap <buffer> gl :call <SID>historyLogForBranchUnderCursor()<Cr>
-augroup END
 
 function! merginal#tryRefreshRebaseAmendBuffer()
     if 'Merginal:RebaseAmend'==bufname('')
@@ -1190,7 +684,7 @@ endfunction
 function! merginal#openHistoryLogBuffer(logBranch,...)
     let l:currentFile=expand('%:~:.')
     if merginal#openTuiBuffer('Merginal:HistoryLog',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_HistoryLog
+        set filetype=merginal-historylog
     endif
 
     let b:merginal_branch=a:logBranch
@@ -1198,19 +692,6 @@ function! merginal#openHistoryLogBuffer(logBranch,...)
     "At any rate, refresh the buffer:
     call merginal#tryRefreshHistoryLogBuffer()
 endfunction
-
-augroup merginal
-    autocmd User Merginal_HistoryLog nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_HistoryLog nnoremap <buffer> R :call merginal#tryRefreshHistoryLogBuffer()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-p> :call <SID>moveToNextOrPreviousCommit(-1)<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> <C-n> :call <SID>moveToNextOrPreviousCommit(1)<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> S :call <SID>printCommitUnderCurosr('fuller')<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> ss :call <SID>printCommitUnderCurosr('fuller')<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> C :call <SID>checkoutCommitUnderCurosr()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> cc :call <SID>checkoutCommitUnderCurosr()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> gd :call <SID>diffWithCommitUnderCursor()<Cr>
-    autocmd User Merginal_HistoryLog nnoremap <buffer> cp :call <SID>cherryPickCommitUnderCursor()<Cr>
-augroup END
 
 function! merginal#tryRefreshHistoryLogBuffer()
     if 'Merginal:HistoryLog'==bufname('')
@@ -1236,81 +717,6 @@ function! merginal#tryRefreshHistoryLogBuffer()
     return 0
 endfunction
 
-"Exactly what it says on tin
-function! s:printCommitUnderCurosr(format)
-    if 'Merginal:HistoryLog'==bufname('')
-        let l:commitHash = merginal#commitHash('.')
-        "Not using merginal#runGitCommandInTreeEcho because we are insterested
-        "in the result as more than just git command output. Also - using
-        "git-log with -1 instead of git-show because for some reason git-show
-        "ignores the --format flag...
-        echo merginal#system(b:merginal_repo.git_command('--no-pager', 'log', '-1', '--format='.a:format, l:commitHash))
-    endif
-endfunction
-
-"Exactly what it says on tin
-function! s:checkoutCommitUnderCurosr()
-    if 'Merginal:HistoryLog'==bufname('')
-        let l:commitHash = merginal#commitHash('.')
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager checkout '.shellescape(l:commitHash))
-        call merginal#reloadBuffers()
-        call merginal#tryRefreshBranchListBuffer(0)
-    endif
-endfunction
-
-"Opens the diff files buffer
-function! s:diffWithCommitUnderCursor()
-    if 'Merginal:HistoryLog'==bufname('')
-        let l:commitHash = merginal#commitHash('.')
-        call merginal#openDiffFilesBuffer(l:commitHash)
-    endif
-endfunction
-
-"Exactly what it says on tin
-function! s:cherryPickCommitUnderCursor()
-    if 'Merginal:HistoryLog' == bufname('')
-        let l:commitHash = merginal#commitHash('.')
-        let l:gitCommand = 'cherry-pick '.shellescape(l:commitHash)
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo, l:gitCommand)
-        if v:shell_error
-            if merginal#isCherryPickMode()
-                call merginal#reloadBuffers()
-                call merginal#openCherryPickConflictsBuffer(winnr())
-            endif
-        else
-            call merginal#reloadBuffers()
-        endif
-    endif
-endfunction
-
-function! s:moveToNextOrPreviousCommit(direction)
-    if 'Merginal:HistoryLog'==bufname('')
-        let l:line = line('.')
-
-        "Find the first line of the current commit
-        while !empty(getline(l:line - 1))
-            let l:line -= 1
-        endwhile
-
-        "Find the first line of the next/prev commit
-        let l:line += a:direction
-        while !empty(getline(l:line - 1))
-            let l:line += a:direction
-        endwhile
-
-        if l:line <= 0 || line('$') <= l:line
-            "We reached past the first/last commit - go back!
-            let l:line -= a:direction
-            while !empty(getline(l:line - 1))
-                let l:line -= a:direction
-            endwhile
-        endif
-        execute l:line
-    endif
-endfunction
-
-
-
 
 
 "Open the cherry-pick conflicts buffer for resolving cherry-pick conflicts
@@ -1318,22 +724,12 @@ function! merginal#openCherryPickConflictsBuffer(...)
     let l:currentFile = expand('%:~:.')
 
     if merginal#openTuiBuffer('Merginal:CherryPick',get(a:000,1,bufwinnr('Merginal:')))
-        doautocmd User Merginal_CherryPickConflicts
+        set filetype=merginal-conflicts
     endif
 
     "At any rate, refresh the buffer:
     call merginal#tryRefreshCherryPickConflictsBuffer(l:currentFile)
 endfunction
-
-augroup merginal
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> q <C-w>q
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> R :call merginal#tryRefreshCherryPickConflictsBuffer(0)<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> <Cr> :call <SID>openMergeConflictUnderCursor()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> A :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> aa :call <SID>addConflictedFileToStagingArea()<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> ca :call <SID>cherryPickAction('abort')<Cr>
-    autocmd User Merginal_CherryPickConflicts nnoremap <buffer> cc :call <SID>cherryPickAction('continue')<Cr>
-augroup END
 
 "Returns 1 if all cherry-pick conflicts are done
 function! merginal#tryRefreshCherryPickConflictsBuffer(fileToJumpTo)
@@ -1349,18 +745,4 @@ function! merginal#tryRefreshCherryPickConflictsBuffer(fileToJumpTo)
         return s:refreshConflictsBuffer(a:fileToJumpTo, l:cherryPickCommitMessageLines)
     endif
     return 0
-endfunction
-
-"Run various cherry-pick actions
-function! s:cherryPickAction(remoteAction)
-    if 'Merginal:CherryPick'==bufname('')
-        call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager cherry-pick --'.a:remoteAction)
-        call merginal#reloadBuffers()
-        if merginal#isCherryPickMode()
-            call merginal#tryRefreshCherryPickConflictsBuffer(0)
-        else
-            "If we finished cherry-picking - close the cherry-pick conflicts buffer
-            wincmd q
-        endif
-    endif
 endfunction
