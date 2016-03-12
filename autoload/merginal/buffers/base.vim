@@ -5,7 +5,7 @@ let s:f.helpVisible = 0
 
 function! s:f.generateHelp() dict
     let l:result = []
-    for l:meta in values(self._meta)
+    for l:meta in self._meta
         if has_key(l:meta, 'doc')
             if !empty(l:meta.keymaps)
                 call add(l:result, l:meta.keymaps[0]."\t".l:meta.doc)
@@ -38,7 +38,7 @@ function! s:f.gitRunInTree(...) dict
     let l:dir = getcwd()
     execute 'cd '.fnameescape(self.repo.tree())
     try
-        let l:gitCommand = call(self.repo.git_command, a:000, self.repo)
+        let l:gitCommand = call(self.repo.git_command, ['--no-pager'] + a:000, self.repo)
         return merginal#system(l:gitCommand)
     finally
         execute 'cd '.fnameescape(l:dir)
@@ -63,6 +63,18 @@ function! s:f.gitEcho(...) dict
         echo "[output]" l:line
     endfor
 endfunction
+
+function! s:f.gitBang(...) dict
+    let l:dir = getcwd()
+    execute 'cd '.fnameescape(self.repo.tree())
+    try
+        let l:gitCommand = call(self.repo.git_command, ['--no-pager'] + a:000, self.repo)
+        call merginal#bang(l:gitCommand)
+    finally
+        execute 'cd '.fnameescape(l:dir)
+    endtry
+endfunction
+
 
 "Returns 1 if a new buffer was opened, 0 if it already existed
 function! s:f.openTuiBuffer() dict
@@ -89,13 +101,13 @@ function! s:f.openTuiBuffer() dict
         execute 'silent file '.self.bufferName()
         call fugitive#detect(self.repo.dir())
 
-        for [l:fn, l:meta] in items(self._meta)
+        for l:meta in self._meta
             for l:keymap in l:meta.keymaps
-                execute 'nnoremap <buffer> '.l:keymap.' :call b:merginal.'.l:fn.'()<Cr>'
+                execute 'nnoremap <buffer> '.l:keymap.' :'.l:meta.execute.'<Cr>'
             endfor
 
             if has_key(l:meta, 'command')
-                execute 'command! -buffer -nargs=0 '.l:meta.command.' :call b:merginal.'.l:fn.'()'
+                execute 'command! -buffer -nargs=0 '.l:meta.command.' '.l:meta.execute
             endif
         endfor
 
@@ -150,16 +162,16 @@ function! s:f.refresh() dict
     execute l:currentLine
     execute 'normal! '.l:currentColumn.'|'
 endfunction
-call s:f.setCommand('refresh', 'MerginalRefresh', 'R', 'Refresh the buffer')
+call s:f.addCommand('refresh', [], 'MerginalRefresh', 'R', 'Refresh the buffer')
 
 function! s:f.quit()
     bdelete
 endfunction
-call s:f.setCommand('quit', 0, 'q', 'Close the buffer')
+call s:f.addCommand('quit', [], 0, 'q', 'Close the buffer')
 
 function! s:f.toggleHelp() dict
     let self.helpVisible = !self.helpVisible
     echo self.helpVisible
     call self.refresh()
 endfunction
-call s:f.setCommand('toggleHelp', 0, '?', 'Toggle this help message')
+call s:f.addCommand('toggleHelp', [], 0, '?', 'Toggle this help message')

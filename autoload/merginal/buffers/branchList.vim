@@ -73,10 +73,130 @@ function! s:f.jumpToCurrentItem() dict
     endif
 endfunction
 
-function! s:f.checkoutBranchUnderCursor() dict
+function! s:f.checkoutBranch() dict
     let l:branch = self.branchDetails('.')
-    call self.gitEcho('--no-pager', 'checkout', l:branch.handle)
+    call self.gitEcho('checkout', l:branch.handle)
+    call self.refresh()
+    call self.jumpToCurrentItem()
+    call merginal#reloadBuffers()
+endfunction
+call s:f.addCommand('checkoutBranch', [], 'MerginalCheckout', ['cc', 'C'], 'Checkout the branch under the cursor')
+
+
+function! s:f.trackBranch(promptForName) dict
+    let l:branch = self.branchDetails('.')
+    if !l:branch.isRemote
+        throw 'Can not track - branch is not remote'
+    endif
+    let l:newBranchName = l:branch.name
+    if a:promptForName
+        let l:newBranchName = input('Track `'.l:branch.handle.'` as: ', l:newBranchName)
+        if empty(l:newBranchName)
+            echo ' '
+            echom 'Branch tracking canceled by user.'
+            return
+        endif
+    endif
+    call self.gitEcho('checkout', '-b', l:newBranchName, '--track', l:branch.handle)
+    if !v:shell_error
+        call merginal#reloadBuffers()
+    endif
     call self.refresh()
     call self.jumpToCurrentItem()
 endfunction
-call s:f.setCommand('checkoutBranchUnderCursor', 'MerginalCheckout', ['cc', 'C'], 'Checkout the branch under the cursor')
+call s:f.addCommand('trackBranch', [0], 'MerginalTrack', 'ct', 'Track the remote branch under the cursor')
+call s:f.addCommand('trackBranch', [1], 'MerginalTrackPrompt', 'cT', 'Track the remote branch under the cursor, prompting for a name')
+
+function! s:f.promptToCreateNewBranch() dict
+    let l:newBranchName = input('Branch `'.self.repo.head().'` to: ')
+    if empty(l:newBranchName)
+        echo ' '
+        echom 'Branch creation canceled by user.'
+        return
+    endif
+    call self.gitEcho('checkout', '-b', l:newBranchName)
+    call merginal#reloadBuffers()
+
+    call self.refresh()
+    call self.jumpToCurrentItem()
+endfunction
+call s:f.addCommand('promptToCreateNewBranch', [], 'MerginalNewBranch', ['aa', 'A'], 'Create a new branch')
+
+function! s:f.deleteBranchUnderCursor() dict
+    let l:branch = self.branchDetails('.')
+    let l:answer = 0
+    if l:branch.isLocal
+        let l:answer = 'yes' == input('Delete branch `'.l:branch.handle.'`? (type "yes" to confirm) ')
+    elseif l:branch.isRemote
+        "Deleting remote branches needs a special warning
+        let l:answer = 'yes-remote' == input('Delete remote(!) branch `'.l:branch.handle.'`? (type "yes-remote" to confirm) ')
+    endif
+    if l:answer
+        if l:branch.isLocal
+            call self.gitEcho('branch', '-D', l:branch.handle)
+        else
+            call self.gitBang('push', l:branch.remote, '--delete', l:branch.name)
+        endif
+        call self.refresh()
+    else
+        echo ' '
+        echom 'Branch deletion canceled by user.'
+    endif
+endfunction
+call s:f.addCommand('deleteBranchUnderCursor', [], 'MerginalDelete', ['dd', 'D'], 'Delete the branch under the cursor')
+
+function! s:f.mergeBranchUnderCursor(...) dict
+    let l:branch = self.branchDetails('.')
+    let l:gitArgs = ['merge', '--no-commit', l:branch.handle]
+    call extend(l:gitArgs, a:000)
+    call call(self.gitEcho, l:gitArgs, self)
+    if merginal#isMergeMode()
+        throw 'Not yet implemented'
+        "call merginal#reloadBuffers()
+        "if v:shell_error
+            "call merginal#openMergeConflictsBuffer(winnr())
+        "else
+            ""If we are in merge mode without a shell error, that means there
+            ""are not conflicts and the user can be prompted to enter a merge
+            ""message.
+            "Gstatus
+            "call merginal#closeMerginalBuffer()
+        "endif
+    else
+        if !v:shell_error
+            call merginal#reloadBuffers()
+        end
+    endif
+endfunction
+call s:f.addCommand('mergeBranchUnderCursor', [], 'MerginalMerge', ['mm', 'M'], 'Merge the branch under the cursor')
+call s:f.addCommand('mergeBranchUnderCursor', ['--no-ff'], 'MerginalMergeNoFF', ['mn'], 'Merge the branch under the cursor using --no-ff')
+
+function! s:f.mergeBranchUnderCursorUsingFugitive() dict
+    let l:branch = self.branchDetails('.')
+    execute ':Gmerge '.l:branchName.handle
+endfunction
+call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMerge', ['mf'], 'Merge the branch under the cursor using fugitive')
+
+function! s:f.rebaseBranchUnderCursor() dict
+    let l:branch = self.branchDetails('.')
+    call self.gitEcho('rebase', l:branch.handle)
+    if v:shell_error
+        if merginal#isRebaseMode()
+            throw 'Not yet implemented'
+            "call merginal#reloadBuffers()
+            "call merginal#openRebaseConflictsBuffer(winnr())
+        endif
+    else
+        call merginal#reloadBuffers()
+    endif
+endfunction
+call s:f.addCommand('rebaseBranchUnderCursor', [], 'MerginalRebase', 'rb', 'Rebase the branch under the cursor')
+
+"ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
+"pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
+"pl :call <SID>remoteActionForBranchUnderCursor('pull',[])<Cr>
+"pr :call <SID>remoteActionForBranchUnderCursor('pull',['--rebase'])<Cr>
+"pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
+"gd :call <SID>diffWithBranchUnderCursor()<Cr>
+"rn :call <SID>renameBranchUnderCursor()<Cr>
+"gl :call <SID>historyLogForBranchUnderCursor()<Cr>

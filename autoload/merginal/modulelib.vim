@@ -32,14 +32,14 @@ function! merginal#modulelib#createObject(moduleName)
     "echo a:moduleName
     let l:obj = {}
     let l:obj.name = a:moduleName
-    let l:obj._meta = {}
+    let l:obj._meta = []
     call s:populate(l:obj, a:moduleName)
     return l:obj
 endfunction
 
 function! merginal#modulelib#prototype()
     let l:prototype = copy(s:f)
-    let l:prototype._meta = {}
+    let l:prototype._meta = []
     return l:prototype
 endfunction
 
@@ -54,8 +54,14 @@ function! s:f.new() dict
     return l:obj
 endfunction
 
-function! s:f.setCommand(functionName, command, keymaps, doc) dict
+function! s:f.addCommand(functionName, args, command, keymaps, doc) dict
     let l:meta = {}
+
+    let l:args = []
+    for l:arg in a:args
+        call add(l:args, string(l:arg))
+    endfor
+    let l:meta.execute = 'call b:merginal.'.a:functionName.'('.join(l:args, ', ').')'
 
     if !empty(a:command)
         let l:meta.command = a:command
@@ -72,6 +78,7 @@ function! s:f.setCommand(functionName, command, keymaps, doc) dict
         let l:meta.doc = a:doc
     endif
 
-    let self._meta[a:functionName] = l:meta
+    "let self._meta[a:functionName] = l:meta
+    call add(self._meta, l:meta)
 endfunction
 
