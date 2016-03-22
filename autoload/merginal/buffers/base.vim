@@ -34,7 +34,7 @@ function! s:f.existingWindowNumber() dict
     return bufwinnr(bufnr(self.bufferName()))
 endfunction
 
-function! s:f.gitRunInTree(...) dict
+function! s:f.gitRun(...) dict
     let l:dir = getcwd()
     execute 'cd '.fnameescape(self.repo.tree())
     try
@@ -46,7 +46,7 @@ function! s:f.gitRunInTree(...) dict
 endfunction
 
 function! s:f.gitLines(...) dict
-    return split(call(self.gitRunInTree, a:000, self), '\r\n\|\n\|\r')
+    return split(call(self.gitRun, a:000, self), '\r\n\|\n\|\r')
 endfunction
 
 function! s:f.gitEcho(...) dict

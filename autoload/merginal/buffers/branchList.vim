@@ -73,6 +73,30 @@ function! s:f.jumpToCurrentItem() dict
     endif
 endfunction
 
+function! s:f.getRemoteBranchTrackedByLocalBranch(localBranchName) dict
+    let l:result = self.gitLines('branch','--list',a:localBranchName,'-vv')
+    return matchstr(l:result, '\v\[\zs[^\[\]:]*\ze[\]:]')
+endfunction
+
+function! s:f.getLocalBranchNamesThatTrackARemoteBranch(remoteBranchName) dict
+    "Get verbose list of branches
+    let l:branchList = self.gitLines('branch', '-vv')
+
+    "Filter for branches that track our remote
+    let l:checkIfTrackingRegex = '\V['.escape(a:remoteBranchName, '\').'\[\]:]'
+    let l:branchList = filter(l:branchList, 'v:val =~ l:checkIfTrackingRegex')
+
+    "Extract the branch name from the matching lines
+    let l:extractBranchNameRegex = '\v^\*?\s*\zs\S+'
+    let l:branchList = map(l:branchList, 'matchstr(v:val, l:extractBranchNameRegex)')
+
+    return l:branchList
+endfunction
+
+
+
+
+
 function! s:f.checkoutBranch() dict
     let l:branch = self.branchDetails('.')
     call self.gitEcho('checkout', l:branch.handle)
@@ -192,11 +216,123 @@ function! s:f.rebaseBranchUnderCursor() dict
 endfunction
 call s:f.addCommand('rebaseBranchUnderCursor', [], 'MerginalRebase', 'rb', 'Rebase the branch under the cursor')
 
-"ps :call <SID>remoteActionForBranchUnderCursor('push',[])<Cr>
-"pS :call <SID>remoteActionForBranchUnderCursor('push',['--force'])<Cr>
-"pl :call <SID>remoteActionForBranchUnderCursor('pull',[])<Cr>
-"pr :call <SID>remoteActionForBranchUnderCursor('pull',['--rebase'])<Cr>
-"pf :call <SID>remoteActionForBranchUnderCursor('fetch',[])<Cr>
+function! s:f.remoteActionForBranchUnderCursor(action, ...) dict
+    let l:branch = self.branchDetails('.')
+    if l:branch.isLocal
+        let l:remotes = self.gitLines('remote')
+        if empty(l:remotes)
+            throw 'Can not '.a:action.' - no remotes defined'
+        endif
+
+        let l:chosenRemoteIndex=0
+        if 1 < len(l:remotes)
+            ""Choose the correct text accoring to the action:
+            let l:prompt = 'Choose remote to '.a:action.' `'.l:branch.handle.'`'
+            if 'push' == a:action
+                let l:prompt .= ' to:'
+            else
+                let l:prompt .= ' from:'
+            endif
+            let l:chosenRemoteIndex = merginal#util#inputList(l:prompt, l:remotes, 'MORE')
+            "Check that the chosen index is in range
+            if l:chosenRemoteIndex <= 0 || len(l:remotes) < l:chosenRemoteIndex
+                return
+            endif
+        endif
+
+        let l:localBranchName = l:branch.name
+        let l:chosenRemote = l:remotes[l:chosenRemoteIndex]
+
+        let l:remoteBranchNameCanadidate = self.getRemoteBranchTrackedByLocalBranch(l:branch.name)
+        if !empty(l:remoteBranchNameCanadidate)
+            "Check that this is the same remote:
+            if l:remoteBranchNameCanadidate =~ '\V\^'.escape(l:chosenRemote, '\').'/'
+                "Remove the remote repository name
+                let l:remoteBranchName = l:remoteBranchNameCanadidate[len(l:chosenRemote) + 1:(-1)]
+            endif
+        endif
+    elseif l:branch.isRemote
+        let l:chosenRemote = l:branch.remote
+        if 'push' == a:action
+            "For push, we want to specify the remote branch name
+            let l:remoteBranchName = l:branch.name
+
+            let l:locals = self.getLocalBranchNamesThatTrackARemoteBranch(l:branch.handle)
+
+            if empty(l:locals)
+                let l:localBranchName = l:branch.name
+            elseif 1 == len(l:locals)
+                let l:localBranchName = l:locals[0]
+            else
+                let l:chosenLocalIndex = merginal#util#inputList('Choose local branch to push `'.l:branch.handle.'` from:', l:locals, 'MORE')
+
+                "Check that the chosen index is in range
+                if l:chosenLocalIndex <= 0 || len(l:locals) < l:chosenLocalIndex
+                    return
+                endif
+
+                let l:localBranchName = l:locals[l:chosenLocalIndex]
+            endif
+        else
+            "For pull and fetch, git automatically resolves the tracking
+            "branch based on the remote branch.
+            let l:localBranchName = l:branch.name
+        endif
+    endif
+
+    if exists('l:remoteBranchName') && empty(l:remoteBranchName)
+        unlet l:remoteBranchName
+    endif
+
+    let l:gitCommandWithArgs = [a:action]
+    for l:flag in a:000
+        call add(l:gitCommandWithArgs, l:flag)
+    endfor
+
+    let l:reloadBuffers = 0
+
+    "Pulling requires the --no-commit flag
+    if 'pull' == a:action
+        if exists('l:remoteBranchName')
+            let l:remoteBranchNameAsPrefix = l:remoteBranchName
+        else
+            let l:remoteBranchNameAsPrefix = ''
+        endif
+        let l:remoteBranchEscapedName = l:remoteBranchNameAsPrefix.l:localBranchName
+        call add(l:gitCommandWithArgs, '--no-commit')
+        let l:reloadBuffers = 1
+
+    elseif 'push' == a:action
+        if exists('l:remoteBranchName')
+            let l:remoteBranchNameAsSuffix = ':'.l:remoteBranchName
+        else
+            let l:remoteBranchNameAsSuffix = ''
+        endif
+        let l:remoteBranchEscapedName = l:localBranchName.l:remoteBranchNameAsSuffix
+
+    elseif 'fetch' == a:action
+        if exists('l:remoteBranchName')
+            let l:targetBranchName = l:remoteBranchName
+        else
+            let l:targetBranchName = l:localBranchName
+        endif
+        let l:remoteBranchEscapedName = l:targetBranchName
+    endif
+
+    call add(l:gitCommandWithArgs, l:chosenRemote)
+    call add(l:gitCommandWithArgs, l:remoteBranchEscapedName)
+
+    call call(self.gitBang, l:gitCommandWithArgs, self)
+    "if l:reloadBuffers
+        "call merginal#reloadBuffers()
+    "endif
+    "call self.refresh()
+endfunction
+call s:f.addCommand('remoteActionForBranchUnderCursor', ['push'], 'MerginalPush', ['ps'], 'Prompt to choose a remote to push the branch under the cursor.')
+call s:f.addCommand('remoteActionForBranchUnderCursor', ['push', '--force'], 'MerginalPushForce', ['pS'], 'Prompt to choose a remote to force push the branch under the cursor.')
+call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull'], 'MerginalPull', ['pl'], 'Prompt to choose a remote to pull the branch under the cursor.')
+call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull', '--rebase'], 'MerginalPullRebase', ['pr'], 'Prompt to choose a remote to pull-rebase the branch under the cursor.')
+call s:f.addCommand('remoteActionForBranchUnderCursor', ['fetch'], 'MerginalFetch', ['pf'], 'Prompt to choose a remote to fetch the branch under the cursor.')
 "gd :call <SID>diffWithBranchUnderCursor()<Cr>
 "rn :call <SID>renameBranchUnderCursor()<Cr>
 "gl :call <SID>historyLogForBranchUnderCursor()<Cr>

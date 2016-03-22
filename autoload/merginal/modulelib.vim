@@ -10,7 +10,12 @@ function! merginal#modulelib#makeModule(namespace, name, parent)
 endfunction
 
 function! s:populate(object, moduleName)
-    let l:module = s:modules[a:moduleName]
+    try
+        let l:module = s:modules[a:moduleName]
+    catch /Key not present in Dictionary/
+        execute 'runtime autoload/merginal/buffers/'.a:moduleName.'.vim'
+        let l:module = s:modules[a:moduleName]
+    endtry
 
     if !empty(l:module.parent)
         call s:populate(a:object, l:module.parent)
@@ -28,8 +33,6 @@ function! s:populate(object, moduleName)
 endfunction
 
 function! merginal#modulelib#createObject(moduleName)
-    "echo s:modules
-    "echo a:moduleName
     let l:obj = {}
     let l:obj.name = a:moduleName
     let l:obj._meta = []
