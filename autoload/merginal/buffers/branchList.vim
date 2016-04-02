@@ -333,6 +333,30 @@ call s:f.addCommand('remoteActionForBranchUnderCursor', ['push', '--force'], 'Me
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull'], 'MerginalPull', ['pl'], 'Prompt to choose a remote to pull the branch under the cursor.')
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull', '--rebase'], 'MerginalPullRebase', ['pr'], 'Prompt to choose a remote to pull-rebase the branch under the cursor.')
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['fetch'], 'MerginalFetch', ['pf'], 'Prompt to choose a remote to fetch the branch under the cursor.')
+
+function! s:f.renameBranchUnderCursor() dict 
+    let l:branch = self.branchDetails('.')
+    if !l:branch.isLocal
+        throw 'Can not rename - not a local branch'
+    endif
+    let l:newName = input('Rename `'.l:branch.handle.'` to: ', l:branch.name)
+    echo ' '
+    if empty(l:newName)
+        echom 'Branch rename canceled by user.'
+        return
+    elseif l:newName==l:branch.name
+        echom 'Branch name was not modified.'
+        return
+    endif
+
+    "let l:gitCommand=b:merginal_repo.git_command('branch','-m',l:branch.name,l:newName)
+    "let l:result=merginal#system(l:gitCommand)
+    "echo l:result
+    call self.gitEcho('branch', '-m', l:branch.name, l:newName)
+    "call merginal#tryRefreshBranchListBuffer(0)
+    call self.refresh()
+endfunction
+call s:f.addCommand('renameBranchUnderCursor', [], 'MerginalRenameBranch', 'rn', 'Prompt to rename the branch under the cursor.')
+
 "gd :call <SID>diffWithBranchUnderCursor()<Cr>
-"rn :call <SID>renameBranchUnderCursor()<Cr>
 "gl :call <SID>historyLogForBranchUnderCursor()<Cr>
