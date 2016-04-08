@@ -64,14 +64,14 @@ function! s:f.printCommitUnderCurosr(format) dict abort
     "ignores the --format flag...
     echo join(self.gitLines('log', '-1', '--format='.a:format, l:commitHash), "\n")
 endfunction
-call s:f.addCommand('printCommitUnderCurosr', ['fuller'], '', ['ss', 'S'], '')
+call s:f.addCommand('printCommitUnderCurosr', ['fuller'], '', ['ss', 'S'], "Echo the commit details(using git's --format=fuller)")
 
 function! s:f.checkoutCommitUnderCurosr() dict abort
     let l:commitHash = self.commitHash('.')
     call self.gitEcho('checkout', l:commitHash)
     call merginal#reloadBuffers()
 endfunction
-call s:f.addCommand('checkoutCommitUnderCurosr', [], 'MerginalCheckout', ['cc', 'C'], '')
+call s:f.addCommand('checkoutCommitUnderCurosr', [], 'MerginalCheckout', ['cc', 'C'], 'Checkout the commit under the cursor.')
 
 function! s:f.diffWithCommitUnderCursor() dict abort
     let l:commitHash = self.commitHash('.')
@@ -79,4 +79,4 @@ function! s:f.diffWithCommitUnderCursor() dict abort
 endfunction
 call s:f.addCommand('diffWithCommitUnderCursor', [], 'MerginalDiff', 'gd', 'Open diff files buffer to diff against the commit under the cursor.')
 
-"call s:f.addCommand('cherryPickCommitUnderCursor', [], 'MerginalCherryPick', 'cp', '')
+"call s:f.addCommand('cherryPickCommitUnderCursor', [], 'MerginalCherryPick', 'cp', 'Cherry-pick the commit under the cursor')
