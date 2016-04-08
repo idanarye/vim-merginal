@@ -353,7 +353,11 @@ function! s:f.renameBranchUnderCursor() dict abort
 endfunction
 call s:f.addCommand('renameBranchUnderCursor', [], 'MerginalRenameBranch', 'rn', 'Prompt to rename the branch under the cursor.')
 
-"gd :call <SID>diffWithBranchUnderCursor()<Cr>
+function! s:f.diffWithBranchUnderCursor() dict abort
+    let l:branch = self.branchDetails('.')
+    call self.gotoBuffer('diffFiles', l:branch.handle)
+endfunction
+call s:f.addCommand('diffWithBranchUnderCursor', [], 'MerginalDiff', 'gd', 'Open diff files buffer to diff against the branch under the cursor.')
 
 function! s:f.historyLogForBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')

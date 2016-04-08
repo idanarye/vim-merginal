@@ -73,5 +73,10 @@ function! s:f.checkoutCommitUnderCurosr() dict abort
 endfunction
 call s:f.addCommand('checkoutCommitUnderCurosr', [], 'MerginalCheckout', ['cc', 'C'], '')
 
-"autocmd User Merginal_HistoryLog nnoremap <buffer> gd :call <SID>diffWithCommitUnderCursor()<Cr>
-"autocmd User Merginal_HistoryLog nnoremap <buffer> cp :call <SID>cherryPickCommitUnderCursor()<Cr>
+function! s:f.diffWithCommitUnderCursor() dict abort
+    let l:commitHash = self.commitHash('.')
+    call self.gotoBuffer('diffFiles', l:commitHash)
+endfunction
+call s:f.addCommand('diffWithCommitUnderCursor', [], 'MerginalDiff', 'gd', 'Open diff files buffer to diff against the commit under the cursor.')
+
+"call s:f.addCommand('cherryPickCommitUnderCursor', [], 'MerginalCherryPick', 'cp', '')
