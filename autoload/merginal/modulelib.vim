@@ -46,7 +46,7 @@ function! merginal#modulelib#prototype()
     return l:prototype
 endfunction
 
-function! s:f.new() dict
+function! s:f.new() dict abort
     let l:obj = {}
     for l:k in keys(self)
         if !has_key(s:f, l:k)
@@ -57,7 +57,7 @@ function! s:f.new() dict
     return l:obj
 endfunction
 
-function! s:f.addCommand(functionName, args, command, keymaps, doc) dict
+function! s:f.addCommand(functionName, args, command, keymaps, doc) dict abort
     let l:meta = {}
 
     let l:args = []

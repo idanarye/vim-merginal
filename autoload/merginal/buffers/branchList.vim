@@ -1,11 +1,10 @@
-
 call merginal#modulelib#makeModule(s:, 'branchList', 'base')
 
-function! s:f.generateBody()
+function! s:f.generateBody() dict abort
     return self.gitLines('branch', '--all')
 endfunction
 
-function! s:f.branchDetails(lineNumber) dict
+function! s:f.branchDetails(lineNumber) dict abort
     call self.verifyLineInBody(a:lineNumber)
 
     let l:line = getline(a:lineNumber)
@@ -58,7 +57,7 @@ function! s:f.branchDetails(lineNumber) dict
     return l:result
 endfunction
 
-function! s:f.jumpToCurrentItem() dict
+function! s:f.jumpToCurrentItem() dict abort
     "Find the current branch's index
     let l:currentBranchIndex = -1
     for l:i in range(len(self.body))
@@ -73,12 +72,12 @@ function! s:f.jumpToCurrentItem() dict
     endif
 endfunction
 
-function! s:f.getRemoteBranchTrackedByLocalBranch(localBranchName) dict
+function! s:f.getRemoteBranchTrackedByLocalBranch(localBranchName) dict abort
     let l:result = self.gitLines('branch','--list',a:localBranchName,'-vv')
     return matchstr(l:result, '\v\[\zs[^\[\]:]*\ze[\]:]')
 endfunction
 
-function! s:f.getLocalBranchNamesThatTrackARemoteBranch(remoteBranchName) dict
+function! s:f.getLocalBranchNamesThatTrackARemoteBranch(remoteBranchName) dict abort
     "Get verbose list of branches
     let l:branchList = self.gitLines('branch', '-vv')
 
@@ -97,7 +96,7 @@ endfunction
 
 
 
-function! s:f.checkoutBranch() dict
+function! s:f.checkoutBranch() dict abort
     let l:branch = self.branchDetails('.')
     call self.gitEcho('checkout', l:branch.handle)
     call self.refresh()
@@ -107,7 +106,7 @@ endfunction
 call s:f.addCommand('checkoutBranch', [], 'MerginalCheckout', ['cc', 'C'], 'Checkout the branch under the cursor')
 
 
-function! s:f.trackBranch(promptForName) dict
+function! s:f.trackBranch(promptForName) dict abort
     let l:branch = self.branchDetails('.')
     if !l:branch.isRemote
         throw 'Can not track - branch is not remote'
@@ -131,7 +130,7 @@ endfunction
 call s:f.addCommand('trackBranch', [0], 'MerginalTrack', 'ct', 'Track the remote branch under the cursor')
 call s:f.addCommand('trackBranch', [1], 'MerginalTrackPrompt', 'cT', 'Track the remote branch under the cursor, prompting for a name')
 
-function! s:f.promptToCreateNewBranch() dict
+function! s:f.promptToCreateNewBranch() dict abort
     let l:newBranchName = input('Branch `'.self.repo.head().'` to: ')
     if empty(l:newBranchName)
         echo ' '
@@ -146,7 +145,7 @@ function! s:f.promptToCreateNewBranch() dict
 endfunction
 call s:f.addCommand('promptToCreateNewBranch', [], 'MerginalNewBranch', ['aa', 'A'], 'Create a new branch')
 
-function! s:f.deleteBranchUnderCursor() dict
+function! s:f.deleteBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')
     let l:answer = 0
     if l:branch.isLocal
@@ -169,7 +168,7 @@ function! s:f.deleteBranchUnderCursor() dict
 endfunction
 call s:f.addCommand('deleteBranchUnderCursor', [], 'MerginalDelete', ['dd', 'D'], 'Delete the branch under the cursor')
 
-function! s:f.mergeBranchUnderCursor(...) dict
+function! s:f.mergeBranchUnderCursor(...) dict abort
     let l:branch = self.branchDetails('.')
     let l:gitArgs = ['merge', '--no-commit', l:branch.handle]
     call extend(l:gitArgs, a:000)
@@ -195,13 +194,13 @@ endfunction
 call s:f.addCommand('mergeBranchUnderCursor', [], 'MerginalMerge', ['mm', 'M'], 'Merge the branch under the cursor')
 call s:f.addCommand('mergeBranchUnderCursor', ['--no-ff'], 'MerginalMergeNoFF', ['mn'], 'Merge the branch under the cursor using --no-ff')
 
-function! s:f.mergeBranchUnderCursorUsingFugitive() dict
+function! s:f.mergeBranchUnderCursorUsingFugitive() dict abort
     let l:branch = self.branchDetails('.')
     execute ':Gmerge '.l:branchName.handle
 endfunction
 call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMerge', ['mf'], 'Merge the branch under the cursor using fugitive')
 
-function! s:f.rebaseBranchUnderCursor() dict
+function! s:f.rebaseBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')
     call self.gitEcho('rebase', l:branch.handle)
     if v:shell_error
@@ -216,7 +215,7 @@ function! s:f.rebaseBranchUnderCursor() dict
 endfunction
 call s:f.addCommand('rebaseBranchUnderCursor', [], 'MerginalRebase', 'rb', 'Rebase the branch under the cursor')
 
-function! s:f.remoteActionForBranchUnderCursor(action, ...) dict
+function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
     let l:branch = self.branchDetails('.')
     if l:branch.isLocal
         let l:remotes = self.gitLines('remote')
@@ -334,7 +333,7 @@ call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull'], 'MerginalPull'
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull', '--rebase'], 'MerginalPullRebase', ['pr'], 'Prompt to choose a remote to pull-rebase the branch under the cursor.')
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['fetch'], 'MerginalFetch', ['pf'], 'Prompt to choose a remote to fetch the branch under the cursor.')
 
-function! s:f.renameBranchUnderCursor() dict 
+function! s:f.renameBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')
     if !l:branch.isLocal
         throw 'Can not rename - not a local branch'
@@ -349,14 +348,16 @@ function! s:f.renameBranchUnderCursor() dict
         return
     endif
 
-    "let l:gitCommand=b:merginal_repo.git_command('branch','-m',l:branch.name,l:newName)
-    "let l:result=merginal#system(l:gitCommand)
-    "echo l:result
     call self.gitEcho('branch', '-m', l:branch.name, l:newName)
-    "call merginal#tryRefreshBranchListBuffer(0)
     call self.refresh()
 endfunction
 call s:f.addCommand('renameBranchUnderCursor', [], 'MerginalRenameBranch', 'rn', 'Prompt to rename the branch under the cursor.')
 
 "gd :call <SID>diffWithBranchUnderCursor()<Cr>
-"gl :call <SID>historyLogForBranchUnderCursor()<Cr>
+
+function! s:f.historyLogForBranchUnderCursor() dict abort
+    let l:branch = self.branchDetails('.')
+    call self.gotoBuffer('historyLog', l:branch.handle)
+endfunction
+call s:f.addCommand('historyLogForBranchUnderCursor', [], 'MerginalHistoryLog', 'gl', 'Open history log buffer to view the history of the branch under the cursor.')
+

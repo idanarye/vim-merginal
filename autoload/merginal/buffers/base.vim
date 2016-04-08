@@ -1,9 +1,8 @@
-
 call merginal#modulelib#makeModule(s:, 'base', '')
 
 let s:f.helpVisible = 0
 
-function! s:f.generateHelp() dict
+function! s:f.generateHelp() dict abort
     let l:result = []
     for l:meta in self._meta
         if has_key(l:meta, 'doc')
@@ -22,19 +21,19 @@ function! s:f.generateHeader()
     return []
 endfunction
 
-function! s:f.generateBody()
+function! s:f.generateBody() dict abort
     throw 'generateBody() Not implemented for '.self.name
 endfunction
 
-function! s:f.bufferName() dict
+function! s:f.bufferName() dict abort
     return 'Merginal:'.self.name
 endfunction
 
-function! s:f.existingWindowNumber() dict
+function! s:f.existingWindowNumber() dict abort
     return bufwinnr(bufnr(self.bufferName()))
 endfunction
 
-function! s:f.gitRun(...) dict
+function! s:f.gitRun(...) dict abort
     let l:dir = getcwd()
     execute 'cd '.fnameescape(self.repo.tree())
     try
@@ -45,11 +44,11 @@ function! s:f.gitRun(...) dict
     endtry
 endfunction
 
-function! s:f.gitLines(...) dict
+function! s:f.gitLines(...) dict abort
     return split(call(self.gitRun, a:000, self), '\r\n\|\n\|\r')
 endfunction
 
-function! s:f.gitEcho(...) dict
+function! s:f.gitEcho(...) dict abort
     let l:lines = call(self.gitLines, a:000, self)
     if len(l:lines) == 1
         " Output a single/empty line to make Vim wait for Enter.
@@ -64,7 +63,7 @@ function! s:f.gitEcho(...) dict
     endfor
 endfunction
 
-function! s:f.gitBang(...) dict
+function! s:f.gitBang(...) dict abort
     let l:dir = getcwd()
     execute 'cd '.fnameescape(self.repo.tree())
     try
@@ -77,10 +76,14 @@ endfunction
 
 
 "Returns 1 if a new buffer was opened, 0 if it already existed
-function! s:f.openTuiBuffer() dict
+function! s:f.openTuiBuffer(targetWindow) dict abort
     let self.repo = fugitive#repo()
 
-    let l:tuiBufferWindow = self.existingWindowNumber()
+    if -1 < a:targetWindow
+        let l:tuiBufferWindow = -1
+    else
+        let l:tuiBufferWindow = self.existingWindowNumber()
+    endif
 
     if -1 < l:tuiBufferWindow "Jump to the already open buffer
         execute l:tuiBufferWindow.'wincmd w'
@@ -89,8 +92,10 @@ function! s:f.openTuiBuffer() dict
             "execute a:inWindow.'wincmd w'
             "enew
         "else
+        if -1 < a:targetWindow
+        else
             40vnew
-        "endif
+        endif
         setlocal buftype=nofile
         setlocal bufhidden=wipe
         setlocal nomodifiable
@@ -123,21 +128,40 @@ function! s:f.openTuiBuffer() dict
     return -1 == l:tuiBufferWindow
 endfunction
 
+function! s:f.gotoBuffer(bufferModuleName, ...) dict abort
+    let l:newBufferObject = merginal#modulelib#createObject(a:bufferModuleName)
+    if has_key(l:newBufferObject, 'init')
+        call call(l:newBufferObject.init, a:000, l:newBufferObject)
+    elseif 0 < a:0
+        throw 'gotoBuffer called with arguments but '.a:bufferModuleName.' has no "init" method'
+    endif
+    call l:newBufferObject.openTuiBuffer(winnr())
+    return l:newBufferObject
+endfunction
 
-function! s:f.verifyLineInBody(lineNumber) dict
-    if line(a:lineNumber) <= len(self.header)
+function! s:f.isLineInBody(lineNumber) dict abort
+    if type(a:lineNumber) == type(0)
+        let l:line = a:lineNumber
+    else
+        let l:line = line(a:lineNumber)
+    endif
+    return len(self.header) < l:line
+endfunction
+
+function! s:f.verifyLineInBody(lineNumber) dict abort
+    if !self.isLineInBody(a:lineNumber)
         throw 'In the header section of the merginal buffer'
     endif
 endfunction
 
-function! s:f.jumpToIndexInBody(index) dict
+function! s:f.jumpToIndexInBody(index) dict abort
     execute a:index + len(self.header) + 1
 endfunction
 
 
 
 
-function! s:f.refresh() dict
+function! s:f.refresh() dict abort
     let self.header = []
     if self.helpVisible
         call extend(self.header, self.generateHelp())
@@ -169,7 +193,7 @@ function! s:f.quit()
 endfunction
 call s:f.addCommand('quit', [], 0, 'q', 'Close the buffer')
 
-function! s:f.toggleHelp() dict
+function! s:f.toggleHelp() dict abort
     let self.helpVisible = !self.helpVisible
     echo self.helpVisible
     call self.refresh()
