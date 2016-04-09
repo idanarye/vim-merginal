@@ -4,7 +4,7 @@ function! s:f.generateHeader() dict abort
         let l:currentCommit = readfile(self.repo.dir('ORIG_HEAD'))[0]
         let l:currentCommitMessageLines = self.gitLines('log', '--format=%s', '-n1', l:currentCommit)
         call insert(l:currentCommitMessageLines, '=== Reapplying: ===')
-        call add(l:currentCommitMessageLines, '===================')
+        call add(l:currentCommitMessageLines,    '===================')
         call add(l:currentCommitMessageLines, '')
         return l:currentCommitMessageLines
 endfunction
@@ -32,6 +32,6 @@ function! s:f.rebaseAction(action) dict abort
         call self.gotoBuffer(l:mode)
     endif
 endfunction
-call s:f.addCommand('rebaseAction', ['abort'], 'MerginalDiff', 'ra', '')
-call s:f.addCommand('rebaseAction', ['skip'], 'MerginalDiff', 'rs', '')
-call s:f.addCommand('rebaseAction', ['continue'], 'MerginalDiff', 'rc', '')
+call s:f.addCommand('rebaseAction', ['abort'], 'MerginalAbort', 'ra', 'Abort the rebase.')
+call s:f.addCommand('rebaseAction', ['skip'], 'MerginalSkip', 'rs', 'Continue to the next patch.')
+call s:f.addCommand('rebaseAction', ['continue'], 'MerginalContinue', 'rc', 'Skip the current patch')

@@ -100,7 +100,7 @@ function! s:f.mergeBranchUnderCursorUsingFugitive() dict abort
     let l:branch = self.branchDetails('.')
     execute ':Gmerge '.l:branchName.handle
 endfunction
-call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMerge', ['mf'], 'Merge the branch under the cursor using fugitive')
+call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMergeUsingFugitive', ['mf'], 'Merge the branch under the cursor using fugitive')
 
 function! s:f.rebaseBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')

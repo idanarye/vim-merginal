@@ -42,45 +42,11 @@ function! s:f.addConflictedFileToStagingArea() dict abort
         return
     endif
 
-    "call merginal#runGitCommandInTreeEcho(b:merginal_repo,'--no-pager add '.shellescape(fnamemodify(l:file.name,':p')))
     call self.gitEcho('add', fnamemodify(l:file.name, ':p'))
     call self.refresh()
 
     if empty(self.body) "This means that was the last file
         call self.lastFileAdded()
     endif
-
-    "if 'Merginal:Conflicts' == bufname('')
-        "if merginal#tryRefreshMergeConflictsBuffer(0)
-            ""If this returns 1, that means this is the last file, and we
-            ""should open gufitive's status window
-            "let l:mergeConflictsBuffer=bufnr('')
-            "Gstatus
-            "let l:gitStatusBuffer=bufnr('')
-            "execute bufwinnr(l:mergeConflictsBuffer).'wincmd w'
-            "wincmd q
-            "execute bufwinnr(l:gitStatusBuffer).'wincmd w'
-        "endif
-    "elseif 'Merginal:Rebase' == bufname('')
-        "if merginal#tryRefreshRebaseConflictsBuffer(0)
-            "echo 'Added the last file of this patch.'
-            "echo 'Continue to the next patch (y/N)?'
-            "let l:answer=getchar()
-            "if char2nr('y')==l:answer || char2nr('Y')==l:answer
-                "call s:rebaseAction('continue')
-            "endif
-        "endif
-    "elseif 'Merginal:CherryPick' == bufname('')
-        "if merginal#tryRefreshCherryPickConflictsBuffer(0)
-            ""If this returns 1, that means this is the last file, and we
-            ""should open gufitive's status window
-            "let l:cherryPickConflictsBuffer=bufnr('')
-            "Gstatus
-            "let l:gitStatusBuffer=bufnr('')
-            "execute bufwinnr(l:cherryPickConflictsBuffer).'wincmd w'
-            "wincmd q
-            "execute bufwinnr(l:gitStatusBuffer).'wincmd w'
-        "endif
-    "endif
 endfunction
 call s:f.addCommand('addConflictedFileToStagingArea', [], 'MerginalAddConflictedFileToStagingArea', ['aa' ,'A'], 'Add the conflicted file under the cursor to the staging area.')

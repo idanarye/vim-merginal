@@ -29,5 +29,5 @@ function! s:f.cherryPickAction(action) dict abort
         wincmd q
     endif
 endfunction
-call s:f.addCommand('cherryPickAction', ['abort'], 'MerginalAbort', 'ca', '')
-call s:f.addCommand('cherryPickAction', ['continue'], 'MerginalContinue', 'cc', '')
+call s:f.addCommand('cherryPickAction', ['abort'], 'MerginalAbort', 'ca', 'Abort the cherry-pick.')
+call s:f.addCommand('cherryPickAction', ['continue'], 'MerginalContinue', 'cc', 'Continue to the next patch.')

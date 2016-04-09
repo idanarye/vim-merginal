@@ -88,10 +88,6 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
     if -1 < l:tuiBufferWindow "Jump to the already open buffer
         execute l:tuiBufferWindow.'wincmd w'
     else "Open a new buffer
-        "if merginal#isMerginalWindow(a:inWindow)
-            "execute a:inWindow.'wincmd w'
-            "enew
-        "else
         if -1 < a:targetWindow
         else
             40vnew

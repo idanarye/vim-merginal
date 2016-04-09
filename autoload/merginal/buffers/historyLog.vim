@@ -4,6 +4,14 @@ function! s:f.init(branch) dict abort
     let self.branch = a:branch
 endfunction
 
+function! s:f.generateHeader() dict abort
+    return [
+                \ '=== Showing History For: ===',
+                \ self.branch,
+                \ '============================',
+                \ '']
+endfunction
+
 function! s:f.generateBody() dict abort
     let l:logLines = self.gitLines('log', '--format=%h %aN%n%ai%n%s%n', self.branch)
     if empty(l:logLines[len(l:logLines) - 1])
@@ -58,13 +66,12 @@ call s:f.addCommand('moveToNextOrPreviousCommit', [1], '', '<C-n>', 'Move the cu
 
 function! s:f.printCommitUnderCurosr(format) dict abort
     let l:commitHash = self.commitHash('.')
-    "Not using merginal#runGitCommandInTreeEcho because we are insterested
-    "in the result as more than just git command output. Also - using
-    "git-log with -1 instead of git-show because for some reason git-show
-    "ignores the --format flag...
+    "Not using self.gitEcho() because we are insterested in the result as more
+    "than just git command output. Also - using git-log with -1 instead of
+    "git-show because for some reason git-show ignores the --format flag...
     echo join(self.gitLines('log', '-1', '--format='.a:format, l:commitHash), "\n")
 endfunction
-call s:f.addCommand('printCommitUnderCurosr', ['fuller'], '', ['ss', 'S'], "Echo the commit details(using git's --format=fuller)")
+call s:f.addCommand('printCommitUnderCurosr', ['fuller'], 'MerginalShow', ['ss', 'S'], "Echo the commit details(using git's --format=fuller)")
 
 function! s:f.checkoutCommitUnderCurosr() dict abort
     let l:commitHash = self.commitHash('.')

@@ -4,6 +4,14 @@ function! s:f.init(diffTarget) dict abort
     let self.diffTarget = a:diffTarget
 endfunction
 
+function! s:f.generateHeader() dict abort
+    return [
+                \ '=== Diffing With: ===',
+                \ self.diffTarget,
+                \ '=====================',
+                \ '']
+endfunction
+
 function! s:f.generateBody() dict abort
     let l:diffFiles = self.gitLines('diff', '--name-status', self.diffTarget)
     return l:diffFiles
