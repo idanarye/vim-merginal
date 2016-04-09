@@ -173,23 +173,19 @@ function! s:f.mergeBranchUnderCursor(...) dict abort
     let l:gitArgs = ['merge', '--no-commit', l:branch.handle]
     call extend(l:gitArgs, a:000)
     call call(self.gitEcho, l:gitArgs, self)
-    if merginal#isMergeMode()
-        throw 'Not yet implemented'
-        "call merginal#reloadBuffers()
-        "if v:shell_error
-            "call merginal#openMergeConflictsBuffer(winnr())
-        "else
-            ""If we are in merge mode without a shell error, that means there
-            ""are not conflicts and the user can be prompted to enter a merge
-            ""message.
-            "Gstatus
-            "call merginal#closeMerginalBuffer()
-        "endif
+    let l:confilctsBuffer = self.gotoSpecialModeBuffer()
+    if empty(l:confilctsBuffer)
+        call self.refresh()
     else
-        if !v:shell_error
-            call merginal#reloadBuffers()
-        end
+        if empty(l:confilctsBuffer.body)
+            "If we are in merge mode without actual conflicts, this means
+            "there are not conflicts and the user can be prompted to enter a
+            "merge message.
+            Gstatus
+            call merginal#closeMerginalBuffer()
+        endif
     endif
+    call merginal#reloadBuffers()
 endfunction
 call s:f.addCommand('mergeBranchUnderCursor', [], 'MerginalMerge', ['mm', 'M'], 'Merge the branch under the cursor')
 call s:f.addCommand('mergeBranchUnderCursor', ['--no-ff'], 'MerginalMergeNoFF', ['mn'], 'Merge the branch under the cursor using --no-ff')
@@ -203,15 +199,8 @@ call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMerge', 
 function! s:f.rebaseBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')
     call self.gitEcho('rebase', l:branch.handle)
-    if v:shell_error
-        if merginal#isRebaseMode()
-            throw 'Not yet implemented'
-            "call merginal#reloadBuffers()
-            "call merginal#openRebaseConflictsBuffer(winnr())
-        endif
-    else
-        call merginal#reloadBuffers()
-    endif
+    call merginal#reloadBuffers()
+    call self.gotoSpecialModeBuffer()
 endfunction
 call s:f.addCommand('rebaseBranchUnderCursor', [], 'MerginalRebase', 'rb', 'Rebase the branch under the cursor')
 

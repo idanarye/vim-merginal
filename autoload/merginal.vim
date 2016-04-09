@@ -1364,3 +1364,25 @@ function! s:cherryPickAction(remoteAction)
         endif
     endif
 endfunction
+
+
+function! merginal#getSpecialMode(repo) abort
+    if !empty(glob(a:repo.dir('MERGE_MODE')))
+        return 'mergeConflicts'
+    elseif isdirectory(a:repo.dir('rebase-merge'))
+        return 'rebaseAmend'
+    elseif isdirectory(a:repo.dir('rebase-apply'))
+        return 'rebaseConflicts'
+    elseif !empty(glob(a:repo.dir('CHERRY_PICK_HEAD')))
+        return 'cherryPickConflicts'
+    endif
+    return ''
+endfunction
+
+function! merginal#openMerginalBuffer() abort
+    let l:mode = merginal#getSpecialMode(fugitive#repo())
+    if empty(l:mode)
+        let l:mode = 'branchList'
+    endif
+    call merginal#modulelib#createObject(l:mode).openTuiBuffer(-1)
+endfunction

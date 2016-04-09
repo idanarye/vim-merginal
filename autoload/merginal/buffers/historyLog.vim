@@ -79,4 +79,20 @@ function! s:f.diffWithCommitUnderCursor() dict abort
 endfunction
 call s:f.addCommand('diffWithCommitUnderCursor', [], 'MerginalDiff', 'gd', 'Open diff files buffer to diff against the commit under the cursor.')
 
-"call s:f.addCommand('cherryPickCommitUnderCursor', [], 'MerginalCherryPick', 'cp', 'Cherry-pick the commit under the cursor')
+function! s:f.cherryPickCommitUnderCursor() dict abort
+    let l:commitHash = self.commitHash('.')
+    call self.gitEcho('cherry-pick', l:commitHash)
+    let l:confilctsBuffer = self.gotoSpecialModeBuffer()
+    if empty(l:confilctsBuffer)
+        call self.refresh()
+    else
+        if empty(l:confilctsBuffer.body)
+            "If we are in cherry-pick mode without actual conflicts, this
+            "means there are not conflicts and the user can be prompted to
+            "enter a cherry-pick message.
+            Gstatus
+            call merginal#closeMerginalBuffer()
+        endif
+    endif
+endfunction
+call s:f.addCommand('cherryPickCommitUnderCursor', [], 'MerginalCherryPick', 'cp', 'Cherry-pick the commit under the cursor')

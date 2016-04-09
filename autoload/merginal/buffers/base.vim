@@ -139,6 +139,20 @@ function! s:f.gotoBuffer(bufferModuleName, ...) dict abort
     return l:newBufferObject
 endfunction
 
+function! s:f._getSpecialMode() dict abort
+    return merginal#getSpecialMode(self.repo)
+endfunction
+
+"Returns the buffer moved to
+function! s:f.gotoSpecialModeBuffer() dict abort
+    let l:mode = self._getSpecialMode()
+    if empty(l:mode) || l:mode == self.name
+        return 0
+    endif
+    let l:newBufferObject = self.gotoBuffer(l:mode)
+    return l:newBufferObject
+endfunction
+
 function! s:f.isLineInBody(lineNumber) dict abort
     if type(a:lineNumber) == type(0)
         let l:line = a:lineNumber
@@ -156,6 +170,11 @@ endfunction
 
 function! s:f.jumpToIndexInBody(index) dict abort
     execute a:index + len(self.header) + 1
+endfunction
+
+function! s:f.isStillInSpecialMode() dict abort
+    let l:mode = self._getSpecialMode()
+    return l:mode == self.name
 endfunction
 
 
