@@ -19,8 +19,8 @@ function! s:f.lastFileAdded() dict abort
 endfunction
 
 
-function! s:f.rebaseAction(remoteAction) dict abort
-    call self.gitEcho('rebase', '--'.a:remoteAction)
+function! s:f.rebaseAction(action) dict abort
+    call self.gitEcho('rebase', '--'.a:action)
     call merginal#reloadBuffers()
     let l:mode = self._getSpecialMode()
     if l:mode == self.name

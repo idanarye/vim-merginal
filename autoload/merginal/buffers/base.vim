@@ -17,7 +17,7 @@ function! s:f.generateHelp() dict abort
     return l:result
 endfunction
 
-function! s:f.generateHeader()
+function! s:f.generateHeader() dict abort
     return []
 endfunction
 
