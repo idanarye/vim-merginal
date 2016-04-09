@@ -1,6 +1,7 @@
 call merginal#modulelib#makeModule(s:, 'base', '')
 
 let s:f.helpVisible = 0
+let s:f.filter = ''
 
 function! s:f.generateHelp() dict abort
     let l:result = []
@@ -196,7 +197,7 @@ function! s:f.refresh() dict abort
     "Clear the buffer:
     silent normal! gg"_dG
     "Write the buffer
-    call setline(1, self.header + self.body)
+    call setline(1, self.header + filter(copy(self.body), '0 <= match(v:val, self.filter)'))
     let l:currentLine = l:currentLine + len(self.header)
     setlocal nomodifiable
 
@@ -215,3 +216,11 @@ function! s:f.toggleHelp() dict abort
     call self.refresh()
 endfunction
 call s:f.addCommand('toggleHelp', [], 0, '?', 'Toggle this help message')
+
+function! s:f.promptForFilter() dict abort
+    let l:newFilter = input('&/')
+    let self.filter = l:newFilter
+    call self.refresh()
+endfunction
+call s:f.addCommand('promptForFilter', [], 0, '&', 'Set filter')
+

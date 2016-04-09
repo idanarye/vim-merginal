@@ -54,6 +54,7 @@ following keymaps to interact with the branches:
 
 q      Close the branch list.
 R      Refresh the branch list.
+&      Filter the branch list.
 cc     Checkout the branch under the cursor.
 ct     Track the remote branch under the cursor.
 cT     Track the remote branch under the cursor, prompting for a name.
@@ -95,6 +96,7 @@ files that have merge conflicts and offers the following keymaps:
 
 q      Close the merge conflicts list.
 R      Refresh the merge conflicts list.
+&      Filter the merge conflicts list.
 <Cr>   Open the conflicted file under the cursor.
 aa     Add the conflicted file under the cursor to the staging area. If that
        was the last conflicted file, the merge conflicts buffer will close and
@@ -109,6 +111,7 @@ currently applied commit message and all the files that have rebase conflicts,
 and offers the following keymaps:
 
 R      Refresh the rebase conflicts list.
+&      Filter the rebase conflicts list.
 <Cr>   Open the conflicted file under the cursor.
 aa     Add the conflicted file under the cursor to the staging area. If that
        was the last conflicted file, prompt the user to continue to the next
@@ -128,6 +131,7 @@ keymaps:
 
 q      Close the rebase amend buffer.
 R      Refresh the rebase amend buffer.
+&      Filter the rebase amend buffer.
 gd     Open |merginal-diff-files| buffer to diff against the branch under the
        cursor.
 gl     Open |merginal-history-log| buffer to view the history of the branch
@@ -145,6 +149,7 @@ opened against, and offers the following keymaps:
 
 q      Close the diff files list.
 R      Refresh the diff files list.
+&      Filter the diff files list.
 <Cr>   Open the file under the cursor (if it exists in the currently checked
        out branch).
 ds     Split-diff against the file under the cursor (if it exists in the other
@@ -163,6 +168,7 @@ offers the following keymaps:
 
 q      Close the history log buffer.
 R      Refresh the history log buffer.
+&      Filter the history log buffer.
 <C-p>  Move the cursor to the previous commit.
 <C-n>  Move the cursor to the next commit.
 ss     Echo the commit details(using git's --format=fuller).
@@ -171,7 +177,7 @@ cc     Checkout the commit under the cursor.
 C      Same as cc.
 gd     Open |merginal-diff-files| buffer to diff against the commit under the
        cursor.
-cc     Cherry-pick the commit under the cursor into the currently checked out
+cp     Cherry-pick the commit under the cursor into the currently checked out
        branch. If there are cherry-pick conflicts, the
        |merginal-cherry-pick-conflicts| buffer will open in place of the
        history log buffer.
@@ -184,6 +190,7 @@ shows the cherry-picked commit message and all the files that have cherry-pick
 conflicts, and offers the following keymaps:
 
 R      Refresh the cherry-pick conflicts list.
+&      Filter the cherry-pick conflicts list.
 <Cr>   Open the conflicted file under the cursor.
 aa     Add the conflicted file under the cursor to the staging area. If that
        was the last conflicted file, prompt the user to continue to the next

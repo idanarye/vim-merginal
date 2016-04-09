@@ -52,6 +52,7 @@ following keymaps to interact with the branches:
 
 * `q`      Close the branch list.
 * `R`      Refresh the branch list.
+* `&`      Filter the branch list.
 * `C`/`cc` Checkout the branch under the cursor.
 * `A`/`aa` Create a new branch from the currently checked out branch. You'll be
            prompted to enter a name for the new branch.
@@ -86,6 +87,7 @@ files that have merge conflicts and offers the following keymaps:
 
 * `q`      Close the merge conflicts list.
 * `R`      Refresh the merge conflicts list.
+* `&`      Filter the merge conflicts list.
 * `<Cr>`   Open the conflicted file under the cursor.
 * `A`/`aa` Add the conflicted file under the cursor to the staging area. If that
            was the last conflicted file, the merge conflicts buffer will close and
@@ -101,6 +103,7 @@ and offers the following keymaps:
 
 * `q`      Close the rebase conflicts list.
 * `R`      Refresh the rebase conflicts list.
+* `&`      Filter the rebase conflicts list.
 * `<Cr>`   Open the conflicted file under the cursor.
 * `aa`     Add the conflicted file under the cursor to the staging area. If
            that was the last conflicted file, prompt the user to continue to
@@ -121,6 +124,7 @@ keymaps:
 
 * `q`      Close the rebase amend buffer.
 * `R`      Refresh the rebase amend buffer.
+* `&`      Filter the rebase amend buffer.
 * `gd`     Diff against the branch under the cursor.
 * `gl`     View the history of the branch under the cursor.
 * `ra`     Abort the rebase
@@ -136,6 +140,7 @@ opened against, and offers the following keymaps:
 
 * `q`      Close the diff files list.
 * `R`      Refresh the diff files list.
+* `&`      Filter the diff files list.
 * `<Cr>`   Open the file under the cursor (if it exists in the currently checked
            out branch).
 * `ds`     Split-diff against the file under the cursor (if it exists in the other
@@ -155,6 +160,7 @@ offers the following keymaps:
 
 * `q`      Close the history log buffer.
 * `R`      Refresh the history log buffer.
+* `&`      Filter the history log buffer.
 * `<C-p>`  Move the cursor to the previous commit.
 * `<C-n>`  Move the cursor to the next commit.
 * `ss`     Echo the commit details(using git's `--format=fuller`).
@@ -162,7 +168,7 @@ offers the following keymaps:
 * `cc`     Checkout the commit under the cursor.
 * `C`      Same as cc.
 * `gd`     Diff against the commit under the cursor.
-* `cc`     Cherry-pick the commit under the cursor into the currently checked out
+* `cp`     Cherry-pick the commit under the cursor into the currently checked out
            branch. If there are cherry-pick conflicts, the
            cherry-pick conflicts buffer will open in place of the
            history log buffer.
@@ -176,6 +182,7 @@ shows the cherry-picked commit message and all the files that have cherry-pick
 conflicts, and offers the following keymaps:
 
 * `R`      Refresh the cherry-pick conflicts list.
+* `&`      Filter the cherry-pick conflicts list.
 * `<Cr>`   Open the conflicted file under the cursor.
 * `aa`     Add the conflicted file under the cursor to the staging area. If that
 *          was the last conflicted file, prompt the user to continue to the next
