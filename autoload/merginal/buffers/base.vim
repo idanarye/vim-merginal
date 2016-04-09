@@ -4,12 +4,14 @@ let s:f.helpVisible = 0
 
 function! s:f.generateHelp() dict abort
     let l:result = []
+    let l:columnWidths = [4, winwidth(0) - 5]
+    echo l:columnWidths
     for l:meta in self._meta
         if has_key(l:meta, 'doc')
             if !empty(l:meta.keymaps)
-                call add(l:result, l:meta.keymaps[0]."\t".l:meta.doc)
+                let l:result += merginal#util#makeColumns(l:columnWidths, [l:meta.keymaps[0], l:meta.doc])
                 for l:keymap in l:meta.keymaps[1:]
-                    call add(l:result, l:keymap."\tsame as ".l:meta.keymaps[0])
+                    let l:result += merginal#util#makeColumns(l:columnWidths, [l:keymap, 'same as '.l:meta.keymaps[0]])
                 endfor
             endif
         endif
@@ -210,7 +212,6 @@ call s:f.addCommand('quit', [], 0, 'q', 'Close the buffer')
 
 function! s:f.toggleHelp() dict abort
     let self.helpVisible = !self.helpVisible
-    echo self.helpVisible
     call self.refresh()
 endfunction
 call s:f.addCommand('toggleHelp', [], 0, '?', 'Toggle this help message')
