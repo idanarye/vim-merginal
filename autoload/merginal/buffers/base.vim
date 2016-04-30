@@ -177,6 +177,9 @@ function! s:f.isStillInSpecialMode() dict abort
 endfunction
 
 
+function! s:f.getFilteredBody() dict abort
+    return filter(copy(self.body), '0 <= match(v:val, self.filter)')
+endfunction
 
 
 function! s:f.refresh() dict abort
@@ -197,7 +200,7 @@ function! s:f.refresh() dict abort
     "Clear the buffer:
     silent normal! gg"_dG
     "Write the buffer
-    call setline(1, self.header + filter(copy(self.body), '0 <= match(v:val, self.filter)'))
+    call setline(1, self.header + self.getFilteredBody())
     let l:currentLine = l:currentLine + len(self.header)
     setlocal nomodifiable
 

@@ -20,6 +20,29 @@ function! s:f.generateBody() dict abort
     return l:logLines
 endfunction
 
+function! s:f.getFilteredBody() dict abort
+    if empty(self.filter)
+        return copy(self.body)
+    endif
+    let l:result = []
+    let l:lastBunch = []
+    for l:line in self.body
+        if empty(l:line)
+            if 0 <= match(l:lastBunch, self.filter)
+                call extend(l:result, l:lastBunch)
+            endif
+            let l:lastBunch = []
+        endif
+        call add(l:lastBunch, l:line)
+    endfor
+    if 0 <= match(l:lastBunch, self.filter)
+        call extend(l:result, l:lastBunch)
+    endif
+    if !empty(l:result) && l:result[0] == ''
+        call remove(l:result, 0)
+    endif
+    return l:result
+endfunction
 
 function! s:f.commitHash(lineNumber) dict abort
     call self.verifyLineInBody(a:lineNumber)
