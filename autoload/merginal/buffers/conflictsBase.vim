@@ -36,6 +36,15 @@ function! s:f.fileDetails(lineNumber) dict abort
 endfunction
 
 
+function! s:f.openConflictedFileUnderCursor() dict abort
+    let l:file = self.fileDetails('.')
+    if empty(l:file.name)
+        return
+    endif
+    call merginal#openFileDecidedWindow(self.repo, l:file.name)
+endfunction
+call s:f.addCommand('openConflictedFileUnderCursor', [], 'MerginalOpen', '<Cr>', 'Open the conflicted file under the cursor.')
+
 function! s:f.addConflictedFileToStagingArea() dict abort
     let l:file = self.fileDetails('.')
     if empty(l:file.name)
