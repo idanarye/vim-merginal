@@ -33,5 +33,5 @@ function! s:f.rebaseAction(action) dict abort
     endif
 endfunction
 call s:f.addCommand('rebaseAction', ['abort'], 'MerginalAbort', 'ra', 'Abort the rebase.')
-call s:f.addCommand('rebaseAction', ['skip'], 'MerginalSkip', 'rs', 'Continue to the next patch.')
-call s:f.addCommand('rebaseAction', ['continue'], 'MerginalContinue', 'rc', 'Skip the current patch')
+call s:f.addCommand('rebaseAction', ['skip'], 'MerginalSkip', 'rs', 'Skip the current patch')
+call s:f.addCommand('rebaseAction', ['continue'], 'MerginalContinue', 'rc', 'Continue to the next patch.')
