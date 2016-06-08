@@ -87,3 +87,16 @@ function! merginal#util#makeColumns(widths, texts) abort
 
     return l:result
 endfunction
+
+let s:RememberdCursorWindow = {}
+function s:RememberdCursorWindow.restore() abort dict
+    execute self.previousWindow.'wincmd w'
+    execute self.currentWindow.'wincmd w'
+endfunction
+
+function! merginal#util#rememberCursorWindow() abort
+    let l:rememberdCursorWindow = copy(s:RememberdCursorWindow)
+    let l:rememberdCursorWindow.previousWindow = winnr('#')
+    let l:rememberdCursorWindow.currentWindow = winnr()
+    return l:rememberdCursorWindow
+endfunction

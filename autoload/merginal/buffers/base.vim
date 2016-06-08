@@ -181,7 +181,6 @@ function! s:f.getFilteredBody() dict abort
     return filter(copy(self.body), '0 <= match(v:val, self.filter)')
 endfunction
 
-
 function! s:f.refresh() dict abort
     let self.header = []
     if self.helpVisible
@@ -193,19 +192,28 @@ function! s:f.refresh() dict abort
     call extend(self.header, self.generateHeader())
     let self.body = self.generateBody()
 
-    let l:currentLine = line('.') - len(self.header)
-    let l:currentColumn = col('.')
+    let l:tuiBufferWindow = self.existingWindowNumber()
+    if -1 < l:tuiBufferWindow
+        let l:remember = merginal#util#rememberCursorWindow()
+        try
+            execute l:tuiBufferWindow.'wincmd w'
+            let l:currentLine = line('.') - len(self.header)
+            let l:currentColumn = col('.')
 
-    setlocal modifiable
-    "Clear the buffer:
-    silent normal! gg"_dG
-    "Write the buffer
-    call setline(1, self.header + self.getFilteredBody())
-    let l:currentLine = l:currentLine + len(self.header)
-    setlocal nomodifiable
+            setlocal modifiable
+            "Clear the buffer:
+            silent normal! gg"_dG
+            "Write the buffer
+            call setline(1, self.header + self.getFilteredBody())
+            let l:currentLine = l:currentLine + len(self.header)
+            setlocal nomodifiable
 
-    execute l:currentLine
-    execute 'normal! '.l:currentColumn.'|'
+            execute l:currentLine
+            execute 'normal! '.l:currentColumn.'|'
+        finally
+            call l:remember.restore()
+        endtry
+    endif
 endfunction
 call s:f.addCommand('refresh', [], 'MerginalRefresh', 'R', 'Refresh the buffer')
 
