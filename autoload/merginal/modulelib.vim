@@ -12,7 +12,7 @@ endfunction
 function! s:populate(object, moduleName)
     try
         let l:module = s:modules[a:moduleName]
-    catch /Key not present in Dictionary/
+    catch /E716/
         execute 'runtime autoload/merginal/buffers/'.a:moduleName.'.vim'
         let l:module = s:modules[a:moduleName]
     endtry
