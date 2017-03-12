@@ -13,7 +13,7 @@ function! s:f.generateHeader() dict abort
 endfunction
 
 function! s:f.generateBody() dict abort
-    let l:logLines = self.gitLines('log', '--format=%h %aN%n%ai%n%s%n', self.branch)
+    let l:logLines = self.gitLines('log', '--format=%h %aN%n%ci%n%s%n', self.branch)
     if empty(l:logLines[len(l:logLines) - 1])
         call remove(l:logLines, len(l:logLines) - 1)
     endif
