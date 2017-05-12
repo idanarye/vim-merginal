@@ -10,12 +10,10 @@ function! merginal#modulelib#makeModule(namespace, name, parent)
 endfunction
 
 function! s:populate(object, moduleName)
-    try
-        let l:module = s:modules[a:moduleName]
-    catch /E716/
-        execute 'runtime autoload/merginal/buffers/'.a:moduleName.'.vim'
-        let l:module = s:modules[a:moduleName]
-    endtry
+    if !has_key(s:modules, a:moduleName)
+      execute 'runtime autoload/merginal/buffers/'.a:moduleName.'.vim'
+    endif
+    let l:module = s:modules[a:moduleName]
 
     if !empty(l:module.parent)
         call s:populate(a:object, l:module.parent)
@@ -84,4 +82,3 @@ function! s:f.addCommand(functionName, args, command, keymaps, doc) dict abort
     "let self._meta[a:functionName] = l:meta
     call add(self._meta, l:meta)
 endfunction
-
