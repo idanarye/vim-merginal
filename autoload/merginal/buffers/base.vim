@@ -78,7 +78,7 @@ function! s:f.gitBang(...) dict abort
 endfunction
 
 
-"Returns 1 if a new buffer was opened, 0 if it already existed
+"Returns 1 if a new window was opened, 0 if it already existed
 function! s:f.openTuiBuffer(targetWindow) dict abort
     let self.repo = fugitive#repo()
 
@@ -92,6 +92,7 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
         execute l:tuiBufferWindow.'wincmd w'
     else "Open a new buffer
         if -1 < a:targetWindow
+            enew
         else
             40vnew
         endif
