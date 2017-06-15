@@ -129,7 +129,12 @@ function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
             endif
             let l:chosenRemoteIndex = merginal#util#inputList(l:prompt, l:remotes, 'MORE')
             "Check that the chosen index is in range
-            if l:chosenRemoteIndex <= 0 || len(l:remotes) < l:chosenRemoteIndex
+            if l:chosenRemoteIndex < 0
+                echom ' '
+                echom string(l:chosenRemoteIndex)
+                echom ' '
+                echom string(l:remotes)
+                echom ' '
                 return
             endif
         endif
@@ -161,7 +166,7 @@ function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
                 let l:chosenLocalIndex = merginal#util#inputList('Choose local branch to push `'.l:branch.handle.'` from:', l:locals, 'MORE')
 
                 "Check that the chosen index is in range
-                if l:chosenLocalIndex <= 0 || len(l:locals) < l:chosenLocalIndex
+                if l:chosenLocalIndex < 0
                     return
                 endif
 
