@@ -47,3 +47,9 @@ You can also toggle the buffer with |:MerginalToggle| or close it with
 |:MerginalClose|.
 
 To see a list of keymaps available in each Merginal buffer, press ?.
+
+
+CONFIGURATION                                       *merginal-configuration*
+
+Set *g:merginal_windowWidth* to the width of the window where the Merignal
+buffer is shown.
