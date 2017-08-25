@@ -73,7 +73,7 @@ function! s:f.jumpToCurrentItem() dict abort
 endfunction
 
 function! s:f.getRemoteBranchTrackedByLocalBranch(localBranchName) dict abort
-    let l:result = self.gitLines('branch','--list',a:localBranchName,'-vv')
+    let l:result = self.gitLines('branch', '--list', a:localBranchName, '-vv', '--')
     return matchstr(l:result, '\v\[\zs[^\[\]:]*\ze[\]:]')
 endfunction
 

@@ -45,7 +45,7 @@ function! s:f.addConflictedFileToStagingArea() dict abort
         return
     endif
 
-    call self.gitEcho('add', fnamemodify(l:file.name, ':p'))
+    call self.gitEcho('add', '--', fnamemodify(l:file.name, ':p'))
     call self.refresh()
 
     if empty(self.body) "This means that was the last file

@@ -2,7 +2,7 @@ call merginal#modulelib#makeModule(s:, 'rebaseAmend', 'immutableBranchList')
 
 function! s:f.generateHeader() dict abort
     let l:amendedCommit = readfile(self.repo.dir('rebase-merge', 'amend'))
-    let l:amendedCommitShort = self.gitRun('rev-parse', '--short', l:amendedCommit[0])
+    let l:amendedCommitShort = self.gitRun('rev-parse', '--short', l:amendedCommit[0], '--')
     let l:amendedCommitShort = substitute(l:amendedCommitShort,'\v[\r\n]','','g')
     let l:header = ['=== Amending '.l:amendedCommitShort.' ===']
 

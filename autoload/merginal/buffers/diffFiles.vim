@@ -13,7 +13,7 @@ function! s:f.generateHeader() dict abort
 endfunction
 
 function! s:f.generateBody() dict abort
-    let l:diffFiles = self.gitLines('diff', '--name-status', self.diffTarget)
+    let l:diffFiles = self.gitLines('diff', '--name-status', self.diffTarget, '--')
     return l:diffFiles
 endfunction
 
