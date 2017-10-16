@@ -94,7 +94,7 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
         if -1 < a:targetWindow
             enew
         else
-            execute get(g:, 'merginal_windowWidth', 40).'vnew'
+            execute get(g:, 'merginal_windowWidth', 40).get(g:, 'merginal_splitType', 'v').'new'
         endif
         setlocal buftype=nofile
         setlocal bufhidden=wipe
