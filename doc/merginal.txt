@@ -51,8 +51,8 @@ To see a list of keymaps available in each Merginal buffer, press ?.
 
 CONFIGURATION                                       *merginal-configuration*
 
-Set *g:merginal_windowWidth* to the width of the window where the Merignal
-buffer is shown.
+Set *g:merginal_windowWidth* or *g:merginal_windowSize* to the size of the window
+where the Merignal buffer will be shown.
 
 Set *g:merginal_splitType* to choose if vim-merginal will split vertically (the default)
 or horizontally (set this to '', empty string)
