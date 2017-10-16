@@ -53,3 +53,6 @@ CONFIGURATION                                       *merginal-configuration*
 
 Set *g:merginal_windowWidth* to the width of the window where the Merignal
 buffer is shown.
+
+Set *g:merginal_splitType* to choose if vim-merginal will split vertically (the default)
+or horizontally (set this to '', empty string)
