@@ -4,7 +4,7 @@ function! s:f.filePaths(filename) dict abort
     let l:result = {}
     let l:result.name = a:filename " For backwards compatibility
     let l:result.fileInTree = fnamemodify(a:filename, ':.')
-    let l:result.fileFullPath = fnamemodify(a:filename, ':p')
+    let l:result.fileFullPath = self.repo.tree(a:filename)
     return l:result
 endfunction
 
