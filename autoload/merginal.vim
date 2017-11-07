@@ -16,7 +16,7 @@ function! merginal#system(command,...)
 endfunction
 
 function! merginal#bang(command)
-    if exists(':terminal')
+    if exists('*termopen')
         redraw "Release 'Press ENTER or type command to continue'
         let l:oldWinView = winsaveview()
         botright new

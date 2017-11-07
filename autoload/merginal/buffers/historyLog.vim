@@ -94,13 +94,13 @@ function! s:f.printCommitUnderCurosr(format) dict abort
     "Not using self.gitEcho() because we are insterested in the result as more
     "than just git command output. Also - using git-log with -1 instead of
     "git-show because for some reason git-show ignores the --format flag...
-    echo join(self.gitLines('log', '-1', '--format='.a:format, l:commitHash), "\n")
+    echo join(self.gitLines('log', '-1', '--format='.a:format, l:commitHash, '--'), "\n")
 endfunction
 call s:f.addCommand('printCommitUnderCurosr', ['fuller'], 'MerginalShow', ['ss', 'S'], "Echo the commit details(using git's --format=fuller)")
 
 function! s:f.checkoutCommitUnderCurosr() dict abort
     let l:commitHash = self.commitHash('.')
-    call self.gitEcho('checkout', l:commitHash)
+    call self.gitEcho('checkout', l:commitHash, '--')
     call merginal#reloadBuffers()
 endfunction
 call s:f.addCommand('checkoutCommitUnderCurosr', [], 'MerginalCheckout', ['cc', 'C'], 'Checkout the commit under the cursor.')
@@ -113,7 +113,7 @@ call s:f.addCommand('diffWithCommitUnderCursor', [], 'MerginalDiff', 'gd', 'Open
 
 function! s:f.cherryPickCommitUnderCursor() dict abort
     let l:commitHash = self.commitHash('.')
-    call self.gitEcho('cherry-pick', l:commitHash)
+    call self.gitEcho('cherry-pick', l:commitHash, '--')
     let l:confilctsBuffer = self.gotoSpecialModeBuffer()
     if empty(l:confilctsBuffer)
         call self.refresh()

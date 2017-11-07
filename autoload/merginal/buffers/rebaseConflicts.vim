@@ -2,7 +2,7 @@ call merginal#modulelib#makeModule(s:, 'rebaseConflicts', 'conflictsBase')
 
 function! s:f.generateHeader() dict abort
         let l:currentCommit = readfile(self.repo.dir('ORIG_HEAD'))[0]
-        let l:currentCommitMessageLines = self.gitLines('log', '--format=%s', '-n1', l:currentCommit)
+        let l:currentCommitMessageLines = self.gitLines('log', '--format=%s', '-n1', l:currentCommit, '--')
         call insert(l:currentCommitMessageLines, '=== Reapplying: ===')
         call add(l:currentCommitMessageLines,    '===================')
         call add(l:currentCommitMessageLines, '')

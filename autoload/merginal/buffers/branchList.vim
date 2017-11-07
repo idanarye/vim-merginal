@@ -4,7 +4,7 @@ call merginal#modulelib#makeModule(s:, 'branchList', 'immutableBranchList')
 
 function! s:f.checkoutBranch() dict abort
     let l:branch = self.branchDetails('.')
-    call self.gitEcho('checkout', l:branch.handle)
+    call self.gitEcho('checkout', l:branch.handle, '--')
     call self.refresh()
     call self.jumpToCurrentItem()
     call merginal#reloadBuffers()
@@ -26,7 +26,7 @@ function! s:f.trackBranch(promptForName) dict abort
             return
         endif
     endif
-    call self.gitEcho('checkout', '-b', l:newBranchName, '--track', l:branch.handle)
+    call self.gitEcho('checkout', '-b', l:newBranchName, '--track', l:branch.handle, '--')
     if !v:shell_error
         call merginal#reloadBuffers()
     endif
@@ -43,7 +43,7 @@ function! s:f.promptToCreateNewBranch() dict abort
         echom 'Branch creation canceled by user.'
         return
     endif
-    call self.gitEcho('checkout', '-b', l:newBranchName)
+    call self.gitEcho('checkout', '-b', l:newBranchName, '--')
     call merginal#reloadBuffers()
 
     call self.refresh()
@@ -62,9 +62,9 @@ function! s:f.deleteBranchUnderCursor() dict abort
     endif
     if l:answer
         if l:branch.isLocal
-            call self.gitEcho('branch', '-D', l:branch.handle)
+            call self.gitEcho('branch', '-D', l:branch.handle, '--')
         else
-            call self.gitBang('push', l:branch.remote, '--delete', l:branch.name)
+            call self.gitBang('push', l:branch.remote, '--delete', l:branch.name, '--')
         endif
         call self.refresh()
     else
@@ -76,7 +76,7 @@ call s:f.addCommand('deleteBranchUnderCursor', [], 'MerginalDelete', ['dd', 'D']
 
 function! s:f.mergeBranchUnderCursor(...) dict abort
     let l:branch = self.branchDetails('.')
-    let l:gitArgs = ['merge', '--no-commit', l:branch.handle]
+    let l:gitArgs = ['merge', '--no-commit', l:branch.handle, '--']
     call extend(l:gitArgs, a:000)
     call call(self.gitEcho, l:gitArgs, self)
     let l:confilctsBuffer = self.gotoSpecialModeBuffer()
@@ -104,7 +104,7 @@ call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMergeUsi
 
 function! s:f.rebaseBranchUnderCursor() dict abort
     let l:branch = self.branchDetails('.')
-    call self.gitEcho('rebase', l:branch.handle)
+    call self.gitEcho('rebase', l:branch.handle, '--')
     call merginal#reloadBuffers()
     call self.gotoSpecialModeBuffer()
 endfunction
@@ -129,7 +129,12 @@ function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
             endif
             let l:chosenRemoteIndex = merginal#util#inputList(l:prompt, l:remotes, 'MORE')
             "Check that the chosen index is in range
-            if l:chosenRemoteIndex <= 0 || len(l:remotes) < l:chosenRemoteIndex
+            if l:chosenRemoteIndex < 0
+                echom ' '
+                echom string(l:chosenRemoteIndex)
+                echom ' '
+                echom string(l:remotes)
+                echom ' '
                 return
             endif
         endif
@@ -161,7 +166,7 @@ function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
                 let l:chosenLocalIndex = merginal#util#inputList('Choose local branch to push `'.l:branch.handle.'` from:', l:locals, 'MORE')
 
                 "Check that the chosen index is in range
-                if l:chosenLocalIndex <= 0 || len(l:locals) < l:chosenLocalIndex
+                if l:chosenLocalIndex < 0
                     return
                 endif
 
@@ -216,6 +221,8 @@ function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
     call add(l:gitCommandWithArgs, l:chosenRemote)
     call add(l:gitCommandWithArgs, l:remoteBranchEscapedName)
 
+    call add(l:gitCommandWithArgs, '--')
+
     call call(self.gitBang, l:gitCommandWithArgs, self)
     "if l:reloadBuffers
         "call merginal#reloadBuffers()
@@ -243,7 +250,7 @@ function! s:f.renameBranchUnderCursor() dict abort
         return
     endif
 
-    call self.gitEcho('branch', '-m', l:branch.name, l:newName)
+    call self.gitEcho('branch', '-m', l:branch.name, l:newName, '--')
     call self.refresh()
 endfunction
 call s:f.addCommand('renameBranchUnderCursor', [], 'MerginalRenameBranch', 'rn', 'Prompt to rename the branch under the cursor.')

@@ -1,4 +1,4 @@
-call merginal#modulelib#makeModule(s:, 'diffFiles', 'base')
+call merginal#modulelib#makeModule(s:, 'diffFiles', 'fileListBase')
 
 function! s:f.init(diffTarget) dict abort
     let self.diffTarget = a:diffTarget
@@ -13,21 +13,22 @@ function! s:f.generateHeader() dict abort
 endfunction
 
 function! s:f.generateBody() dict abort
-    let l:diffFiles = self.gitLines('diff', '--name-status', self.diffTarget)
+    let l:diffFiles = self.gitLines('diff', '--name-status', self.diffTarget, '--')
     return l:diffFiles
 endfunction
 
-function! s:f.diffFileDetails(lineNumber) dict abort
+function! s:f.fileDetails(lineNumber) dict abort
     call self.verifyLineInBody(a:lineNumber)
 
     let l:line = getline(a:lineNumber)
-    let l:result = {}
 
     let l:matches = matchlist(l:line, '\v([ADM])\t(.*)$')
 
     if empty(l:matches)
         throw 'Unable to get diff files details for `'.l:line.'`'
     endif
+
+    let l:result = self.filePaths(l:matches[2])
 
     let l:result.isAdded = 0
     let l:result.isDeleted = 0
@@ -43,23 +44,14 @@ function! s:f.diffFileDetails(lineNumber) dict abort
         let l:result.isModified = 1
     endif
 
-    let l:result.fileInTree = l:matches[2]
-    let l:result.fileFullPath = self.repo.tree(l:matches[2])
-
     return l:result
 endfunction
 
 
 function! s:f.openDiffFileUnderCursor() dict abort
-    let l:diffFile = self.diffFileDetails('.')
-
-    if l:diffFile.isDeleted
-        throw 'File does not exist in current buffer'
-    endif
-
-    call merginal#openFileDecidedWindow(self.repo, l:diffFile.fileFullPath)
+    echoerr 'openDiffFileUnderCursor is deprecated - please use openFileUnderCursor instead'
+    call self.openFileUnderCursor()
 endfunction
-call s:f.addCommand('openDiffFileUnderCursor', [], 'MerginalOpen', '<Cr>', 'Open the file under the cursor (if it exists in the currently checked out branch).')
 
 
 function! s:f.openDiffFileUnderCursorAndDiff(diffType) dict abort
@@ -67,7 +59,7 @@ function! s:f.openDiffFileUnderCursorAndDiff(diffType) dict abort
         throw 'Bad diff type'
     endif
 
-    let l:diffFile = self.diffFileDetails('.')
+    let l:diffFile = self.fileDetails('.')
 
     if l:diffFile.isAdded
         throw 'File does not exist in other buffer'
@@ -94,7 +86,7 @@ call s:f.addCommand('openDiffFileUnderCursorAndDiff', ['v'], 'MerginalVDiff', 'd
 
 
 function! s:f.checkoutDiffFileUnderCursor() dict abort
-    let l:diffFile = self.diffFileDetails('.')
+    let l:diffFile = self.fileDetails('.')
 
     if l:diffFile.isAdded
         throw 'File does not exist in diffed buffer'

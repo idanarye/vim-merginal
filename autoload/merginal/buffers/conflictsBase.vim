@@ -1,4 +1,4 @@
-call merginal#modulelib#makeModule(s:, 'conflictsBase', 'base')
+call merginal#modulelib#makeModule(s:, 'conflictsBase', 'fileListBase')
 
 function! s:f.generateBody() dict abort
     "Get the list of unmerged files:
@@ -28,22 +28,16 @@ function! s:f.fileDetails(lineNumber) dict abort
     call self.verifyLineInBody(a:lineNumber)
 
     let l:line = getline(a:lineNumber)
-    let l:result = {}
-
-    let l:result.name = l:line
+    let l:result = self.filePaths(l:line)
 
     return l:result
 endfunction
 
 
 function! s:f.openConflictedFileUnderCursor() dict abort
-    let l:file = self.fileDetails('.')
-    if empty(l:file.name)
-        return
-    endif
-    call merginal#openFileDecidedWindow(self.repo, l:file.name)
+    echoerr 'openConflictedFileUnderCursor is deprecated - please use openFileUnderCursor instead'
+    call self.openFileUnderCursor()
 endfunction
-call s:f.addCommand('openConflictedFileUnderCursor', [], 'MerginalOpen', '<Cr>', 'Open the conflicted file under the cursor.')
 
 function! s:f.addConflictedFileToStagingArea() dict abort
     let l:file = self.fileDetails('.')
@@ -51,7 +45,7 @@ function! s:f.addConflictedFileToStagingArea() dict abort
         return
     endif
 
-    call self.gitEcho('add', fnamemodify(l:file.name, ':p'))
+    call self.gitEcho('add', '--', fnamemodify(l:file.name, ':p'))
     call self.refresh()
 
     if empty(self.body) "This means that was the last file

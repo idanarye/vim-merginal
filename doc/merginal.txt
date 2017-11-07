@@ -4,7 +4,7 @@
 Author:  Idan Arye <https://github.com/idanarye/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 2.0.2
+Version: 2.1.0
 
 INTRODUCTION                                                      *merginal*
 
@@ -46,155 +46,13 @@ work in buffers that are parts of Git repositories.
 You can also toggle the buffer with |:MerginalToggle| or close it with
 |:MerginalClose|.
 
-
-THE BRANCH LIST                                       *merginal-branch-list*
-
-The branch list shows a list of branches. While in that list, you can use the
-following keymaps to interact with the branches:
-
-q      Close the branch list.
-R      Refresh the branch list.
-&      Filter the branch list.
-cc     Checkout the branch under the cursor.
-ct     Track the remote branch under the cursor.
-cT     Track the remote branch under the cursor, prompting for a name.
-C      Same as cc.
-aa     Create a new branch from the currently checked out branch. You'll be
-       prompted to enter a name for the new branch.
-A      Same as aa.
-dd     Delete the branch under the cursor.
-D      Same as dd.
-mm     Merge the branch under the cursor into the currently checked out
-       branch. If there are merge conflicts, the |merginal-merge-conflicts|
-       buffer will open in place of the branch list buffer.
-M      Same as mm.
-mf     Merge the branch under the cursor into the currently checked out branch
-       using Fugitive's |:Gmerge| command.
-mn     Merge the branch under the cursor using the --no-ff flag, forcing the
-       creation of a merge commit even when the merge resolves as a
-       fast-forward.
-rb     Rebase the currently checked out branch against the branch under the
-       cursor. If there are rebase conflicts, the |merginal-rebase-conflicts|
-       buffer will open in place of
-       the branch list buffer.
-ps     Prompt to choose a remote to push the branch under the cursor.
-pS     Prompt to choose a remote to force push the branch under the cursor.
-pl     Prompt to choose a remote to pull the branch under the cursor.
-pr     Prompt to choose a remote to pull-rebase the branch under the cursor.
-pf     Prompt to choose a remote to fetch the branch under the cursor.
-gd     Open |merginal-diff-files| buffer to diff against the branch under the
-       cursor.
-rn     Prompt to rename the branch under the cursor.
-gl     Open |merginal-history-log| buffer to view the history of the branch
-       under the cursor.
+To see a list of keymaps available in each Merginal buffer, press ?.
 
 
-MERGE CONFLICTS                                   *merginal-merge-conflicts*
+CONFIGURATION                                       *merginal-configuration*
 
-The merge conflicts buffer is used to solve merge conflicts. It shows all the
-files that have merge conflicts and offers the following keymaps:
+Set *g:merginal_windowWidth* or *g:merginal_windowSize* to the size of the window
+where the Merignal buffer will be shown.
 
-q      Close the merge conflicts list.
-R      Refresh the merge conflicts list.
-&      Filter the merge conflicts list.
-<Cr>   Open the conflicted file under the cursor.
-aa     Add the conflicted file under the cursor to the staging area. If that
-       was the last conflicted file, the merge conflicts buffer will close and
-       |fugitive-:Gstatus| will open.
-A      Same as aa.
-
-
-REBASE CONFLICTS                                 *merginal-rebase-conflicts*
-
-The rebase conflicts buffer is used to solve rebase conflicts. It shows the
-currently applied commit message and all the files that have rebase conflicts,
-and offers the following keymaps:
-
-R      Refresh the rebase conflicts list.
-&      Filter the rebase conflicts list.
-<Cr>   Open the conflicted file under the cursor.
-aa     Add the conflicted file under the cursor to the staging area. If that
-       was the last conflicted file, prompt the user to continue to the next
-       patch.
-A      Same as aa.
-ra     Abort the rebase.
-rc     Continue to the next patch.
-rs     Skip the current patch
-
-
-REBASE AMEND                                         *merginal-rebase-amend*
-
-The rebase amend buffer is shown when you amend a patch during a rebase. It
-shows the amended commit's shortened hash and commit message. Additionally, it
-shows all the branches so you can diff against them. If offers the following
-keymaps:
-
-q      Close the rebase amend buffer.
-R      Refresh the rebase amend buffer.
-&      Filter the rebase amend buffer.
-gd     Open |merginal-diff-files| buffer to diff against the branch under the
-       cursor.
-gl     Open |merginal-history-log| buffer to view the history of the branch
-       under the cursor.
-ra     Abort the rebase.
-rc     Continue to the next patch.
-rs     Skip the current patch.
-
-
-DIFF FILES                                             *merginal-diff-files*
-
-The diff files buffer is used to diff against another branch. It displays all
-the differences between the currently checked out branch and the branch it was
-opened against, and offers the following keymaps:
-
-q      Close the diff files list.
-R      Refresh the diff files list.
-&      Filter the diff files list.
-<Cr>   Open the file under the cursor (if it exists in the currently checked
-       out branch).
-ds     Split-diff against the file under the cursor (if it exists in the other
-       branch).
-dv     VSplit-diff against the file under the cursor (if it exists in the other
-       branch).
-co     Check out the file under the cursor (if it exists in the other branch)
-       into the current branch.
-
-
-HISTORY LOG                                           *merginal-history-log*
-
-The history log buffer is used to show the history of a branch. It shows, for
-each commit in the branch, the author, date and commit message subject, and
-offers the following keymaps:
-
-q      Close the history log buffer.
-R      Refresh the history log buffer.
-&      Filter the history log buffer.
-<C-p>  Move the cursor to the previous commit.
-<C-n>  Move the cursor to the next commit.
-ss     Echo the commit details(using git's --format=fuller).
-S      Same as ss.
-cc     Checkout the commit under the cursor.
-C      Same as cc.
-gd     Open |merginal-diff-files| buffer to diff against the commit under the
-       cursor.
-cp     Cherry-pick the commit under the cursor into the currently checked out
-       branch. If there are cherry-pick conflicts, the
-       |merginal-cherry-pick-conflicts| buffer will open in place of the
-       history log buffer.
-
-
-CHERRY-PICK CONFLICTS                       *merginal-cherry-pick-conflicts*
-
-The cherry-pick conflicts buffer is used to solve cherry-pick conflicts. It
-shows the cherry-picked commit message and all the files that have cherry-pick
-conflicts, and offers the following keymaps:
-
-R      Refresh the cherry-pick conflicts list.
-&      Filter the cherry-pick conflicts list.
-<Cr>   Open the conflicted file under the cursor.
-aa     Add the conflicted file under the cursor to the staging area. If that
-       was the last conflicted file, prompt the user to continue to the next
-       patch.
-A      Same as aa.
-ra     Abort the cherry-pick.
-rc     Continue to the next patch.
+Set *g:merginal_splitType* to choose if vim-merginal will split vertically (the default)
+or horizontally (set this to '', empty string)
