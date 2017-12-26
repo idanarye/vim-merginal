@@ -52,7 +52,11 @@ To see a list of keymaps available in each Merginal buffer, press ?.
 CONFIGURATION                                       *merginal-configuration*
 
 Set *g:merginal_windowWidth* or *g:merginal_windowSize* to the size of the window
-where the Merignal buffer will be shown.
+where the Merginal buffer will be shown.
 
 Set *g:merginal_splitType* to choose if vim-merginal will split vertically (the default)
 or horizontally (set this to '', empty string)
+
+Set *g:merginal_logCommitCount* to limit the number of commits displayed in the Merginal
+buffer. Please note that there is no `See More` feature so there will be no indicator if
+there are unseen commits
