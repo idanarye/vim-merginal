@@ -78,7 +78,7 @@ function! s:f.mergeBranchUnderCursor(...) dict abort
     let l:branch = self.branchDetails('.')
     let l:gitArgs = ['merge', '--no-commit'] 
     call extend(l:gitArgs, a:000)
-    call extend(l:gitArgs, ['--', l:branch.handle])
+    call extend(l:gitArgs, [l:branch.handle, '--'])
     call call(self.gitEcho, l:gitArgs, self)
     let l:confilctsBuffer = self.gotoSpecialModeBuffer()
     if empty(l:confilctsBuffer)
