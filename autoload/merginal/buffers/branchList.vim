@@ -76,8 +76,7 @@ call s:f.addCommand('deleteBranchUnderCursor', [], 'MerginalDelete', ['dd', 'D']
 
 function! s:f.mergeBranchUnderCursor(...) dict abort
     let l:branch = self.branchDetails('.')
-    let l:gitArgs = ['merge', '--no-commit', l:branch.handle, '--']
-    call extend(l:gitArgs, a:000)
+    let l:gitArgs = ['merge', '--no-commit', a:000, l:branch.handle, '--']
     call call(self.gitEcho, l:gitArgs, self)
     let l:confilctsBuffer = self.gotoSpecialModeBuffer()
     if empty(l:confilctsBuffer)
