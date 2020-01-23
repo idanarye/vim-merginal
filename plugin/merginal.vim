@@ -18,6 +18,6 @@ function! s:toggleBasedOnMergeMode() abort
     endif
 endfunction
 
-autocmd User Fugitive command! -buffer -nargs=0 Merginal call merginal#openMerginalBuffer()
-autocmd User Fugitive command! -buffer -nargs=0 MerginalToggle call s:toggleBasedOnMergeMode()
-autocmd User Fugitive command! -buffer -nargs=0 MerginalClose call merginal#closeMerginalBuffer()
+command! -nargs=0 Merginal call merginal#openMerginalBuffer()
+command! -nargs=0 MerginalToggle call s:toggleBasedOnMergeMode()
+command! -nargs=0 MerginalClose call merginal#closeMerginalBuffer()
