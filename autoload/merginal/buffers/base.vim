@@ -106,7 +106,7 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
         setlocal nonumber
         setlocal norelativenumber
         execute 'silent file '.self.bufferName()
-        call fugitive#detect(self.repo.dir())
+        call FugitiveDetect(self.repo.dir())
 
         for l:meta in self._meta
             for l:keymap in l:meta.keymaps
