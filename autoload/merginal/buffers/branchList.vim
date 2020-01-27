@@ -231,7 +231,7 @@ function! s:f.remoteActionForBranchUnderCursor(action, ...) dict abort
     "call self.refresh()
 endfunction
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['push'], 'MerginalPush', ['ps'], 'Prompt to choose a remote to push the branch under the cursor.')
-call s:f.addCommand('remoteActionForBranchUnderCursor', ['push', '--force'], 'MerginalPushForce', ['pS'], 'Prompt to choose a remote to force push the branch under the cursor.')
+call s:f.addCommand('remoteActionForBranchUnderCursor', ['push', '--force-with-lease'], 'MerginalPushForce', ['pS'], 'Prompt to choose a remote to force (with lease) push the branch under the cursor.')
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull'], 'MerginalPull', ['pl'], 'Prompt to choose a remote to pull the branch under the cursor.')
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['pull', '--rebase'], 'MerginalPullRebase', ['pr'], 'Prompt to choose a remote to pull-rebase the branch under the cursor.')
 call s:f.addCommand('remoteActionForBranchUnderCursor', ['fetch'], 'MerginalFetch', ['pf'], 'Prompt to choose a remote to fetch the branch under the cursor.')
