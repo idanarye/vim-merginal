@@ -110,7 +110,7 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
 
         for l:meta in self._meta
             for l:keymap in l:meta.keymaps
-                execute 'nnoremap <buffer> '.l:keymap.' :'.l:meta.execute.'<Cr>'
+                execute 'nnoremap <buffer> <nowait> '.l:keymap.' :'.l:meta.execute.'<Cr>'
             endfor
 
             if has_key(l:meta, 'command')

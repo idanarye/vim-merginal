@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Made merginal commands global, not buffer-local, because Fugutive no longer fires the signals Merginal depended on.
 - Changed `fugitive#detect` to `FugitiveDetect`.
 - Made `pS` push with `--force-with-lease` instead of just `--force`. Yes, this is a fix. No this is not a breaking change. If this breaks your workflow then your workflow was broken to begin with.
+- Made all the mappings `<nowait>`.
 
 ## [2.1.1] - 2019-09-06
 ### Added
