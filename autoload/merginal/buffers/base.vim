@@ -28,12 +28,21 @@ function! s:f.generateBody() dict abort
     throw 'generateBody() Not implemented for '.self.name
 endfunction
 
+function! s:bufferNameFor(role) abort
+    if !exists('t:merginal_tabpageUniqueIdentifier')
+        let t:merginal_tabpageUniqueIdentifier = reltimestr(reltime())
+    endif
+    return printf('Merginal:%s:%s', a:role, t:merginal_tabpageUniqueIdentifier)
+endfunction
+
 function! s:f.bufferName() dict abort
-    return 'Merginal:'.self.name
+    return s:bufferNameFor(self.name)
 endfunction
 
 function! s:f.existingWindowNumber() dict abort
-    return bufwinnr(bufnr(self.bufferName()))
+    " return bufwinnr(bufnr(self.bufferName()))
+    " return bufwinnr(bufnr(s:bufferNameFor('*')))
+    return bufwinnr('Merginal:')
 endfunction
 
 function! s:f.gitRun(...) dict abort
@@ -76,7 +85,6 @@ function! s:f.gitBang(...) dict abort
         execute 'cd '.fnameescape(l:dir)
     endtry
 endfunction
-
 
 "Returns 1 if a new window was opened, 0 if it already existed
 function! s:f.openTuiBuffer(targetWindow) dict abort

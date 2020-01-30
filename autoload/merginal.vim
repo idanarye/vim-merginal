@@ -169,5 +169,10 @@ function! merginal#openMerginalBuffer() abort
     if empty(l:mode)
         let l:mode = 'branchList'
     endif
-    call merginal#modulelib#createObject(l:mode).openTuiBuffer(-1)
+    if exists('b:merginal')
+        let l:targetWindow = winnr()
+    else
+        let l:targetWindow = -1
+    endif
+    call merginal#modulelib#createObject(l:mode).openTuiBuffer(l:targetWindow)
 endfunction

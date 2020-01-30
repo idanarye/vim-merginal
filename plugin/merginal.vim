@@ -10,8 +10,10 @@ function! s:toggleBasedOnMergeMode() abort
         if l:bufferObject.name == l:mode
             call merginal#closeMerginalBuffer()
             return
-        else
+        elseif l:merginalWindowNumber == winnr()
             call l:bufferObject.gotoBuffer(l:mode)
+        else
+            execute l:merginalWindowNumber.'wincmd w'
         endif
     else
         call merginal#openMerginalBuffer()
