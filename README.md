@@ -1,7 +1,7 @@
 INTRODUCTION
 ============
 
-Merginal aims provide a nice inteface for dealing with Git branches.  It
+Merginal aims to provide a nice interface for dealing with Git branches. It
 offers interactive TUI for:
 
  * Viewing the list of branches
