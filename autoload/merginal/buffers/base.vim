@@ -1,6 +1,7 @@
 call merginal#modulelib#makeModule(s:, 'base', '')
 
 let s:f.helpVisible = 0
+let s:f.remoteVisible = get(g:, 'merginal_remoteVisible', 1)
 let s:f.filter = ''
 
 function! s:f.generateHelp() dict abort
@@ -238,6 +239,12 @@ function! s:f.toggleHelp() dict abort
     call self.refresh()
 endfunction
 call s:f.addCommand('toggleHelp', [], 0, '?', 'Toggle this help message')
+
+function! s:f.toggleRemote() dict abort
+    let self.remoteVisible = !self.remoteVisible
+    call self.refresh()
+endfunction
+call s:f.addCommand('toggleRemote', [], 0, 'tr', 'Toggle remote branches')
 
 function! s:f.promptForFilter() dict abort
     let l:newFilter = input('&/')

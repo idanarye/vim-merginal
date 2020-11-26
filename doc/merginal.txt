@@ -60,3 +60,6 @@ or horizontally (set this to '', empty string)
 Set *g:merginal_logCommitCount* to limit the number of commits displayed in the Merginal
 buffer. Please note that there is no `See More` feature so there will be no indicator if
 there are unseen commits
+
+Set *g:merginal_remoteVisible* to choose if vim-merginal will view remote branches (the default)
+or hide (set this to 0).
