@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [2.1.2] - 2020-11-26
+### Added
+- Added merginal_remoteVisible variable to set remote branches to be viewed by default
+- Added a hotkey 'tr' to toggle remote branches in the view
+
 ## [2.1.2] - 2020-01-29
 ### Fixed
 - Made merginal commands global, not buffer-local, because Fugutive no longer fires the signals Merginal depended on.
