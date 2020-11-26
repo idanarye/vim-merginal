@@ -7,16 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 ### Added
 - Support separate Meginal buffers on multiple tabs.
+- Added merginal_remoteVisible variable to set remote branches to be viewed by default.
+- Added a hotkey 'tr' to toggle remote branches in the view.
 
 ### Changed
 - Calling `Merginal` or `MerginalToggle` when the merginal buffer is open but not in the main mode (branch list by default, or changes if in special Git status) will:
   - Jump to it, if the user is in another window.
   - Change it to the main mode, if the user is in it.
-
-## [2.1.2] - 2020-11-26
-### Added
-- Added merginal_remoteVisible variable to set remote branches to be viewed by default
-- Added a hotkey 'tr' to toggle remote branches in the view
 
 ## [2.1.2] - 2020-01-29
 ### Fixed
