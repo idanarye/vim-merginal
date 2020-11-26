@@ -1,7 +1,7 @@
 call merginal#modulelib#makeModule(s:, 'immutableBranchList', 'base')
 
 function! s:f.generateBody() dict abort
-    if self.isRemoteVisible
+    if self.remoteVisible
         return self.gitLines('branch', '--all')
     else
         return self.gitLines('branch')
