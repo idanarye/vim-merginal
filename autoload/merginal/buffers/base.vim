@@ -4,6 +4,23 @@ let s:f.helpVisible = 0
 let s:f.remoteVisible = get(g:, 'merginal_remoteVisible', 1)
 let s:f.filter = ''
 
+function! s:flattenAppend(target, items) abort
+    for l:item in a:items
+        if type(l:item) == type([])
+            call s:flattenAppend(a:target, l:item)
+        elseif type(l:item) == type('')
+            call add(a:target, l:item)
+        else
+            call add(a:target, string(l:item))
+        endif
+    endfor
+    return a:target
+endfunction
+
+function! s:f.gitCommand(...) dict abort
+    return FugitiveShellCommand(self.repo.dir(), s:flattenAppend([], a:000))
+endfunction
+
 function! s:f.generateHelp() dict abort
     let l:result = []
     let l:columnWidths = [4, winwidth(0) - 5]
@@ -50,7 +67,8 @@ function! s:f.gitRun(...) dict abort
     let l:dir = getcwd()
     execute 'cd '.fnameescape(self.repo.tree())
     try
-        let l:gitCommand = call(self.repo.git_command, ['--no-pager'] + a:000, self.repo)
+        let l:gitCommand = self.gitCommand('--no-pager', a:000)
+        echo 'Running command' string(l:gitCommand)
         return merginal#system(l:gitCommand)
     finally
         execute 'cd '.fnameescape(l:dir)
@@ -80,7 +98,7 @@ function! s:f.gitBang(...) dict abort
     let l:dir = getcwd()
     execute 'cd '.fnameescape(self.repo.tree())
     try
-        let l:gitCommand = call(self.repo.git_command, ['--no-pager'] + a:000, self.repo)
+        let l:gitCommand = self.gitCommand('--no-pager', a:000)
         call merginal#bang(l:gitCommand)
     finally
         execute 'cd '.fnameescape(l:dir)
