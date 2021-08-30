@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 ### Fixed
 - Use `FugitiveShellCommand` instead of `repo.git_command` (which is deprecated by Fugitive)
+- Use `Git merge` instead of `Gmerge` (which is deprecated by Fugitive)
 
 ## [2.2.0] - 2020-12-06
 ### Added
