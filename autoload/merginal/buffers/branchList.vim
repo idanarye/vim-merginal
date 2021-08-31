@@ -99,7 +99,7 @@ call s:f.addCommand('mergeBranchUnderCursor', ['--no-ff'], 'MerginalMergeNoFF', 
 
 function! s:f.mergeBranchUnderCursorUsingFugitive() dict abort
     let l:branch = self.branchDetails('.')
-    execute ':Gmerge '.l:branch.handle
+    execute ':Git merge '.l:branch.handle
 endfunction
 call s:f.addCommand('mergeBranchUnderCursorUsingFugitive', [], 'MerginalMergeUsingFugitive', ['mf'], 'Merge the branch under the cursor using fugitive')
 
