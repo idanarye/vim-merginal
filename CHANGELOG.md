@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.2.1] - 2021-11-26
 ### Fixed
 - Use `FugitiveShellCommand` instead of `repo.git_command` (which is deprecated by Fugitive)
 - Use `Git merge` instead of `Gmerge` (which is deprecated by Fugitive)
