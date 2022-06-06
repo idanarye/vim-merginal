@@ -132,6 +132,7 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
         setlocal winfixheight
         setlocal nonumber
         setlocal norelativenumber
+        setlocal filetype=merginal
         execute 'silent file '.self.bufferName()
         call FugitiveDetect(self.repo.dir())
 
