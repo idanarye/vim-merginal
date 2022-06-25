@@ -18,7 +18,7 @@ function! s:flattenAppend(target, items) abort
 endfunction
 
 function! s:f.gitCommand(...) dict abort
-    return FugitiveShellCommand(self.repo.dir(), s:flattenAppend([], a:000))
+    return FugitiveShellCommand(self.fugitiveContext, s:flattenAppend([], a:000))
 endfunction
 
 function! s:f.generateHelp() dict abort
@@ -65,7 +65,7 @@ endfunction
 
 function! s:f.gitRun(...) dict abort
     let l:dir = getcwd()
-    execute 'cd '.fnameescape(self.repo.tree())
+    execute 'cd '.fnameescape(self.fugitiveContext.work_tree)
     try
         let l:gitCommand = self.gitCommand('--no-pager', a:000)
         echo 'Running command' string(l:gitCommand)
@@ -96,7 +96,7 @@ endfunction
 
 function! s:f.gitBang(...) dict abort
     let l:dir = getcwd()
-    execute 'cd '.fnameescape(self.repo.tree())
+    execute 'cd '.fnameescape(self.fugitiveContext.work_tree)
     try
         let l:gitCommand = self.gitCommand('--no-pager', a:000)
         call merginal#bang(l:gitCommand)
@@ -107,7 +107,10 @@ endfunction
 
 "Returns 1 if a new window was opened, 0 if it already existed
 function! s:f.openTuiBuffer(targetWindow) dict abort
-    let self.repo = fugitive#repo()
+    let self.fugitiveContext = {
+                \ 'git_dir': FugitiveGitDir(),
+                \ 'work_tree': FugitiveWorkTree(),
+                \ }
 
     if -1 < a:targetWindow
         let l:tuiBufferWindow = -1
@@ -134,7 +137,7 @@ function! s:f.openTuiBuffer(targetWindow) dict abort
         setlocal norelativenumber
         setlocal filetype=merginal
         execute 'silent file '.self.bufferName()
-        call FugitiveDetect(self.repo.dir())
+        call FugitiveDetect(self.fugitiveContext.git_dir)
 
         for l:meta in self._meta
             for l:keymap in l:meta.keymaps
@@ -170,7 +173,7 @@ function! s:f.gotoBuffer(bufferModuleName, ...) dict abort
 endfunction
 
 function! s:f._getSpecialMode() dict abort
-    return merginal#getSpecialMode(self.repo)
+    return merginal#getSpecialMode(self.fugitiveContext.git_dir)
 endfunction
 
 "Returns the buffer moved to

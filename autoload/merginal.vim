@@ -32,7 +32,7 @@ endfunction
 
 "Opens a file that belongs to a repo in a window that already belongs to that
 "repo. Creates a new window if can't find suitable window.
-function! merginal#openFileDecidedWindow(repo,fileName)
+function! merginal#openFileDecidedWindow(fugitiveContext, fileName)
     "We have to check with bufexists, because bufnr also match prefixes of the
     "file name
     let l:fileBuffer=-1
@@ -53,12 +53,12 @@ function! merginal#openFileDecidedWindow(repo,fileName)
     else
         "Check if the previous window can be used
         let l:previousWindow=winnr('#')
-        if s:isWindowADisposableWindowOfRepo(l:previousWindow,a:repo)
+        if s:isWindowADisposableWindowOfRepo(l:previousWindow, a:fugitiveContext)
             execute winnr('#').'wincmd w'
         else
             "If the previous window can't be used, check if any open
             "window can be used
-            let l:windowsToOpenTheFileIn=merginal#getListOfDisposableWindowsOfRepo(a:repo)
+            let l:windowsToOpenTheFileIn=merginal#getListOfDisposableWindowsOfRepo(a:fugitiveContext)
             if empty(l:windowsToOpenTheFileIn)
                 "If no open window can be used, open a new Vim window
                 new
@@ -78,7 +78,7 @@ function! merginal#openFileDecidedWindow(repo,fileName)
 endfunction
 
 "Check if the current window is modifiable, saved, and belongs to the repo
-function! s:isCurrentWindowADisposableWindowOfRepo(repo)
+function! s:isCurrentWindowADisposableWindowOfRepo(fugitiveContext)
     if !&modifiable
         return 0
     endif
@@ -86,28 +86,28 @@ function! s:isCurrentWindowADisposableWindowOfRepo(repo)
         return 0
     endif
     try
-        return a:repo==fugitive#repo()
+        return a:fugitiveContext.git_dir == FugitiveGitDir() && a:fugitiveContext.work_tree == FugitiveWorkTree()
     catch
         return 0
     endtry
 endfunction
 
 "Calls s:isCurrentWindowADisposableWindowOfRepo with a window number
-function! s:isWindowADisposableWindowOfRepo(winnr,repo)
+function! s:isWindowADisposableWindowOfRepo(winnr, fugitiveContext)
     let l:currentWindow=winnr()
     try
         execute a:winnr.'wincmd w'
-        return s:isCurrentWindowADisposableWindowOfRepo(a:repo)
+        return s:isCurrentWindowADisposableWindowOfRepo(a: fugitiveContext)
     finally
         execute l:currentWindow.'wincmd w'
     endtry
 endfunction
 
 "Get a list of windows that yield true with s:isWindowADisposableWindowOfRepo
-function! merginal#getListOfDisposableWindowsOfRepo(repo)
+function! merginal#getListOfDisposableWindowsOfRepo(fugitiveContext)
     let l:result=[]
     let l:currentWindow=winnr()
-    windo if s:isCurrentWindowADisposableWindowOfRepo(a:repo) | call add(l:result,winnr()) |  endif
+    windo if s:isCurrentWindowADisposableWindowOfRepo(a:fugitiveContext) | call add(l:result,winnr()) |  endif
     execute l:currentWindow.'wincmd w'
     return l:result
 endfunction
@@ -151,21 +151,21 @@ function! merginal#closeMerginalBuffer()
 endfunction
 
 
-function! merginal#getSpecialMode(repo) abort
-    if !empty(glob(a:repo.dir('MERGE_MODE')))
+function! merginal#getSpecialMode(gitDir) abort
+    if !empty(glob(a:gitDir . '/MERGE_MODE'))
         return 'mergeConflicts'
-    elseif isdirectory(a:repo.dir('rebase-merge'))
+    elseif isdirectory(a:gitDir . '/rebase-merge')
         return 'rebaseAmend'
-    elseif isdirectory(a:repo.dir('rebase-apply'))
+    elseif isdirectory(a:gitDir . '/rebase-apply')
         return 'rebaseConflicts'
-    elseif !empty(glob(a:repo.dir('CHERRY_PICK_HEAD')))
+    elseif !empty(glob(a:gitDir . '/CHERRY_PICK_HEAD'))
         return 'cherryPickConflicts'
     endif
     return ''
 endfunction
 
 function! merginal#openMerginalBuffer() abort
-    let l:mode = merginal#getSpecialMode(fugitive#repo())
+    let l:mode = merginal#getSpecialMode(FugitiveGitDir())
     if empty(l:mode)
         let l:mode = 'branchList'
     endif

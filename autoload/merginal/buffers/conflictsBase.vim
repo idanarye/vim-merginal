@@ -16,7 +16,7 @@ function! s:f.generateBody() dict abort
 
     "If the working copy is not the current dir, we can get wrong paths.
     "We need to resolve that:
-    let l:conflicts = map(l:conflicts, 'self.repo.tree(v:val)')
+    let l:conflicts = map(l:conflicts, 'FugitiveFind(self.fugitiveContext, v:val)')
 
     "Make the paths as short as possible:
     let l:conflicts = map(l:conflicts, 'fnamemodify(v:val, ":~:.")')

@@ -4,7 +4,7 @@ function! s:f.filePaths(filename) dict abort
     let l:result = {}
     let l:result.name = a:filename " For backwards compatibility
     let l:result.fileInTree = fnamemodify(a:filename, ':.')
-    let l:result.fileFullPath = self.repo.tree(a:filename)
+    let l:result.fileFullPath = FugitiveFind(self.fugitiveContext, a:filename)
     return l:result
 endfunction
 
@@ -14,7 +14,7 @@ function! s:f.openFileUnderCursor() dict abort
     if empty(l:file.name)
         return
     endif
-    call merginal#openFileDecidedWindow(self.repo, l:file.fileFullPath)
+    call merginal#openFileDecidedWindow(self.fugitiveContext, l:file.fileFullPath)
 endfunction
 call s:f.addCommand('openFileUnderCursor', [], 'MerginalOpen', ['<Cr>', 'o'], 'Open the file under the cursor.')
 

@@ -37,7 +37,7 @@ call s:f.addCommand('trackBranch', [0], 'MerginalTrack', 'ct', 'Track the remote
 call s:f.addCommand('trackBranch', [1], 'MerginalTrackPrompt', 'cT', 'Track the remote branch under the cursor, prompting for a name')
 
 function! s:f.promptToCreateNewBranch() dict abort
-    let l:newBranchName = input('Branch `'.self.repo.head().'` to: ')
+    let l:newBranchName = input('Branch `'.FugitiveHead(b:merginal.fugitiveContext).'` to: ')
     if empty(l:newBranchName)
         echo ' '
         echom 'Branch creation canceled by user.'

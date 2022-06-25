@@ -77,7 +77,7 @@ function! s:f.openDiffFileUnderCursorAndDiff(diffType) dict abort
         execute bufwinnr(l:currentWindowBuffer).'wincmd w'
     endtry
 
-    call merginal#openFileDecidedWindow(self.repo, l:diffFile.fileFullPath)
+    call merginal#openFileDecidedWindow(self.fugitiveContext, l:diffFile.fileFullPath)
 
     execute ':G'.a:diffType.'diff '.fnameescape(self.diffTarget)
 endfunction
