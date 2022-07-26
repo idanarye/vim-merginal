@@ -97,7 +97,7 @@ function! s:isWindowADisposableWindowOfRepo(winnr, fugitiveContext)
     let l:currentWindow=winnr()
     try
         execute a:winnr.'wincmd w'
-        return s:isCurrentWindowADisposableWindowOfRepo(a: fugitiveContext)
+        return s:isCurrentWindowADisposableWindowOfRepo(a:fugitiveContext)
     finally
         execute l:currentWindow.'wincmd w'
     endtry
