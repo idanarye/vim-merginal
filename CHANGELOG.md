@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [2.2.3] - 2022-10-29
+### Fixed
+- Remove a stray echo when generating help for the various Merginal buffers.
+
 ## [2.2.2] - 2022-10-05
 ### Fixed
 - Replace `fugitive#repo()` usage with Fugitives standalone functions.
