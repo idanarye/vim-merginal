@@ -24,7 +24,6 @@ endfunction
 function! s:f.generateHelp() dict abort
     let l:result = []
     let l:columnWidths = [4, winwidth(0) - 5]
-    echo l:columnWidths
     for l:meta in self._meta
         if has_key(l:meta, 'doc')
             if !empty(l:meta.keymaps)
