@@ -55,7 +55,7 @@ endfunction
 
 
 function! s:f.openDiffFileUnderCursorAndDiff(diffType) dict abort
-    if a:diffType!='s' && a:diffType!='v'
+    if a:diffType!='h' && a:diffType!='v'
         throw 'Bad diff type'
     endif
 
@@ -79,9 +79,9 @@ function! s:f.openDiffFileUnderCursorAndDiff(diffType) dict abort
 
     call merginal#openFileDecidedWindow(self.fugitiveContext, l:diffFile.fileFullPath)
 
-    execute ':G'.a:diffType.'diff '.fnameescape(self.diffTarget)
+    execute ':G'.a:diffType.'diffsplit '.fnameescape(self.diffTarget)
 endfunction
-call s:f.addCommand('openDiffFileUnderCursorAndDiff', ['s'], 'MerginalDiff', 'ds', 'Split-diff against the file under the cursor (if it exists in the other branch)')
+call s:f.addCommand('openDiffFileUnderCursorAndDiff', ['h'], 'MerginalDiff', 'ds', 'Split-diff against the file under the cursor (if it exists in the other branch)')
 call s:f.addCommand('openDiffFileUnderCursorAndDiff', ['v'], 'MerginalVDiff', 'dv', 'VSplit-diff against the file under the cursor (if it exists in the other branch)')
 
 

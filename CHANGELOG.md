@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [2.2.4] - 2023-08-27
+### Fixed
+- `ds` now calls `:Ghdiffsplit`, since that's the new name of `:Gsdiffsplit`.
+
 ## [2.2.3] - 2022-10-29
 ### Fixed
 - Remove a stray echo when generating help for the various Merginal buffers.
