@@ -71,5 +71,5 @@ Set *g:merginal_resizeWindowToBranchLen* to 1 to automatically resize the split
 to the longest branch name length. This overrides g:merginal_windowWidth and
 g:merginal_windowSize. Default is 0.
 
-Set *g:merginalResizePadding* to the number of characters you would like padded to the end 
+Set *g:merginal_resizePadding* to the number of characters you would like padded to the end 
 of the branch name length when using *g:merginal_resizeWindowToBranchLen*. Default 5.
