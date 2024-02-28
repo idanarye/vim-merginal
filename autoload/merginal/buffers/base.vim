@@ -67,7 +67,10 @@ function! s:f.gitRun(...) dict abort
     execute 'cd '.fnameescape(self.fugitiveContext.work_tree)
     try
         let l:gitCommand = self.gitCommand('--no-pager', a:000)
-        echo 'Running command' string(l:gitCommand)
+        let l:show_commands = get(g:, 'merginal_showCommands', 1)
+        if l:show_commands
+            echo 'Running command' string(l:gitCommand)
+        endif
         return merginal#system(l:gitCommand)
     finally
         execute 'cd '.fnameescape(l:dir)
