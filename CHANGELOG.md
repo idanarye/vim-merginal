@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- `g:merginal_showCommands` to control whether Git commands will be `echo`ed.
+- `g:merginal_resizeWindowToBranchLen` and `g:merginal_resizePadding` to resize the branch list to fit the branches lengths.
 
 ## [2.2.4] - 2023-08-27
 ### Fixed
