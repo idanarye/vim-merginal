@@ -251,7 +251,7 @@ function! s:f.refresh() dict abort
                 let l:max_strlen = 0
                 for line in self.body
                     if strlen(line) ># l:max_strlen
-                        let l:max_strlen = strlen(line) + 5
+                        let l:max_strlen = strlen(line) + get(g:, 'merginalResizePadding', 5)
                     endif
                 endfor
                 call win_move_separator(winnr(), (l:max_strlen - l:cur_win.width))
