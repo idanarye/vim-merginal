@@ -88,7 +88,7 @@ function! s:f.mergeBranchUnderCursor(...) dict abort
             "If we are in merge mode without actual conflicts, this means
             "there are not conflicts and the user can be prompted to enter a
             "merge message.
-            Gstatus
+            Git
             call merginal#closeMerginalBuffer()
         endif
     endif

@@ -2,7 +2,7 @@ call merginal#modulelib#makeModule(s:, 'mergeConflicts', 'conflictsBase')
 
 function! s:f.lastFileAdded() dict abort
     let l:mergeConflictsBuffer = bufnr('')
-    Gstatus
+    Git
     let l:gitStatusBuffer = bufnr('')
     execute bufwinnr(l:mergeConflictsBuffer).'wincmd w'
     wincmd q

@@ -11,7 +11,7 @@ endfunction
 
 function! s:f.lastFileAdded() dict abort
     let l:cherryPickConflictsBuffer = bufnr('')
-    Gstatus
+    Git
     let l:gitStatusBuffer = bufnr('')
     execute bufwinnr(l:cherryPickConflictsBuffer).'wincmd w'
     wincmd q

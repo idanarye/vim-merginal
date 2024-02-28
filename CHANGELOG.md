@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `g:merginal_showCommands` to control whether Git commands will be `echo`ed.
 - `g:merginal_resizeWindowToBranchLen` and `g:merginal_resizePadding` to resize the branch list to fit the branches lengths.
 
+### Fixed
+- Use `Git` instead of `Gstatus` (which was deprecated and removed from Fugitive)
+
 ## [2.2.4] - 2023-08-27
 ### Fixed
 - `ds` now calls `:Ghdiffsplit`, since that's the new name of `:Gsdiffsplit`.

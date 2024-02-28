@@ -120,7 +120,7 @@ function! s:f.cherryPickCommitUnderCursor() dict abort
             "If we are in cherry-pick mode without actual conflicts, this
             "means there are not conflicts and the user can be prompted to
             "enter a cherry-pick message.
-            Gstatus
+            Git
             call merginal#closeMerginalBuffer()
         endif
     endif
