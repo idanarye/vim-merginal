@@ -55,11 +55,21 @@ Set *g:merginal_windowWidth* or *g:merginal_windowSize* to the size of the windo
 where the Merginal buffer will be shown.
 
 Set *g:merginal_splitType* to choose if vim-merginal will split vertically (the default)
-or horizontally (set this to '', empty string)
+or horizontally (set this to '', empty string).
 
 Set *g:merginal_logCommitCount* to limit the number of commits displayed in the Merginal
 buffer. Please note that there is no `See More` feature so there will be no indicator if
-there are unseen commits
+there are unseen commits.
 
 Set *g:merginal_remoteVisible* to choose if vim-merginal will view remote branches (the default)
 or hide (set this to 0).
+
+Set *g:merginal_showCommands* 0 to hide git command being run (default is
+1).
+
+Set *g:merginal_resizeWindowToBranchLen* to 1 to automatically resize the split
+to the longest branch name length. This overrides g:merginal_windowWidth and
+g:merginal_windowSize. Default is 0.
+
+Set *g:merginal_resizePadding* to the number of characters you would like padded to the end 
+of the branch name length when using *g:merginal_resizeWindowToBranchLen*. Default 5.

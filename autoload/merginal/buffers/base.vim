@@ -67,7 +67,10 @@ function! s:f.gitRun(...) dict abort
     execute 'cd '.fnameescape(self.fugitiveContext.work_tree)
     try
         let l:gitCommand = self.gitCommand('--no-pager', a:000)
-        echo 'Running command' string(l:gitCommand)
+        let l:show_commands = get(g:, 'merginal_showCommands', 1)
+        if l:show_commands
+            echo 'Running command' string(l:gitCommand)
+        endif
         return merginal#system(l:gitCommand)
     finally
         execute 'cd '.fnameescape(l:dir)
@@ -241,6 +244,18 @@ function! s:f.refresh() dict abort
             let l:currentLine = l:currentLine + len(self.header)
             setlocal nomodifiable
 
+            " Resize window if desired
+            let l:resize_to_branch_strlen = get(g:, 'merginal_resizeWindowToBranchLen', 0)
+            if l:resize_to_branch_strlen
+                let l:cur_win = getwininfo(win_getid())[0]
+                let l:max_strlen = 0
+                for line in self.body
+                    if strlen(line) ># l:max_strlen
+                        let l:max_strlen = strlen(line) + get(g:, 'merginal_resizePadding', 5)
+                    endif
+                endfor
+                call win_move_separator(winnr(), (l:max_strlen - l:cur_win.width))
+            endif
             execute l:currentLine
             execute 'normal! '.l:currentColumn.'|'
         finally
