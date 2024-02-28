@@ -64,7 +64,7 @@ there are unseen commits.
 Set *g:merginal_remoteVisible* to choose if vim-merginal will view remote branches (the default)
 or hide (set this to 0).
 
-Set *g:merginal_showCommands* 0 to show hide git command being run (default is
+Set *g:merginal_showCommands* 0 to hide git command being run (default is
 1).
 
 Set *g:merginal_resizeWindowToBranchLen* to 1 to automatically resize the split
