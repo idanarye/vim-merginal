@@ -96,6 +96,7 @@ function! s:f.mergeBranchUnderCursor(...) dict abort
 endfunction
 call s:f.addCommand('mergeBranchUnderCursor', [], 'MerginalMerge', ['mm', 'M'], 'Merge the branch under the cursor')
 call s:f.addCommand('mergeBranchUnderCursor', ['--no-ff'], 'MerginalMergeNoFF', ['mn'], 'Merge the branch under the cursor using --no-ff')
+call s:f.addCommand('mergeBranchUnderCursor', ['--squash'], 'MerginalMergeSquash', ['ms'], 'Merge the branch under the cursor using --squash')
 
 function! s:f.mergeBranchUnderCursorUsingFugitive() dict abort
     let l:branch = self.branchDetails('.')
