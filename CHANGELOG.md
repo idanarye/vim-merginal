@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `g:merginal_showCommands` to control whether Git commands will be `echo`ed.
 - `g:merginal_resizeWindowToBranchLen` and `g:merginal_resizePadding` to resize the branch list to fit the branches lengths.
 - `ms` keymap for merging with `--squash`.
+- `g:merginal_branchListFlags` to control the branch list displayed in the Merginal buffer.
 
 ### Fixed
 - Use `Git` instead of `Gstatus` (which was deprecated and removed from Fugitive)

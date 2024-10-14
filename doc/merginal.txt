@@ -73,3 +73,11 @@ g:merginal_windowSize. Default is 0.
 
 Set *g:merginal_resizePadding* to the number of characters you would like padded to the end 
 of the branch name length when using *g:merginal_resizeWindowToBranchLen*. Default 5.
+
+Set *g:merginal_branchListFlags* to a list of flags that will be added to the
+"git branch" command when generating the |merginal-branch-list|. For example,
+to sort the branches in the list by reverse sorted order of last commit date,
+add the following to your Vim configuration:
+>
+    let g:merginal_branchListFlags = ['--sort=-committerdate']
+<

@@ -1,11 +1,12 @@
 call merginal#modulelib#makeModule(s:, 'immutableBranchList', 'base')
 
 function! s:f.generateBody() dict abort
+    let l:args = ['branch']
     if self.remoteVisible
-        return self.gitLines('branch', '--all')
-    else
-        return self.gitLines('branch')
+        call add(l:args, '--all')
     endif
+    call extend(l:args, get(g:, 'merginal_branchListFlags', []))
+    return call(self.gitLines, l:args, self)
 endfunction
 
 function! s:f.branchDetails(lineNumber) dict abort
